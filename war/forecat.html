@@ -1,0 +1,189 @@
+<!doctype html>
+<!-- The DOCTYPE declaration above will set the     -->
+<!-- browser's rendering engine into                -->
+<!-- "Standards Mode". Replacing this declaration   -->
+<!-- with a "Quirks Mode" doctype is not supported. -->
+
+<!--
+	Forecat Tool
+	(c) MMXII Juan Antonio Pérez-Ortiz. Based on an idea by Mikel L. Forcada
+	Transducens Research Group, Universitat d'Alacant
+-->
+
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+<!--  Cat favicon: http://www.favicon.cc/?action=icon&file_id=484694 -->
+
+<!--                                                               -->
+<!-- Consider inlining CSS to reduce the number of requested files -->
+<!--                                                               -->
+<link type="text/css" rel="stylesheet" href="forecat.css">
+
+<!--                                           -->
+<!-- Any title is fine                         -->
+<!--                                           -->
+<title>Forecat Tool</title>
+
+<!--                                           -->
+<!-- This script loads your compiled module.   -->
+<!-- If you add any GWT meta tags, they must   -->
+<!-- be added before this line.                -->
+<!--                                           -->
+<script type="text/javascript" language="javascript"
+	src="forecat/forecat.nocache.js"></script>
+</head>
+
+<!--                                           -->
+<!-- The body can have arbitrary html, or      -->
+<!-- you can leave the body empty if you want  -->
+<!-- to create a completely dynamic UI.        -->
+<!--                                           -->
+<body>
+
+	<!-- OPTIONAL: include this if you want history support -->
+	<iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1'
+		style="position: absolute; width: 0; height: 0; border: 0"></iframe>
+
+	<!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+	<noscript>
+		<div
+			style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+			Your web browser must have JavaScript enabled in order for this
+			application to display correctly.</div>
+	</noscript>
+	
+	<div id="content"></div>
+
+	<div id="title">
+		Forecat Tool
+	</div>
+
+	<form>
+		<div class="form-from">
+			<label>Source text</label>
+			<textarea id="from" rows="6" cols="85"></textarea>
+		</div>
+		<div class="form-translate">
+			<button type="button" id="translate" 
+					onClick="translationService(document.getElementById('from').value);">Translate</button>
+
+			&nbsp;&nbsp; Length of longest suggestions: <select id="maxlength"
+				onChange="setMaxLength(value);">
+				<option value="0">0</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4" selected="selected">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+			</select> &nbsp;&nbsp; Languages: <select id="lang"
+				onChange="setLanguagePair(value)">
+				<option value="">Loading language list...</option>
+			</select>
+		</div>
+
+		<div class="form-to">
+			<label>Translated text</label>
+			<textarea id="to" rows="6" cols="85"></textarea>
+		</div>
+	</form>
+
+	<div class="form-wait" id="segmentcount">
+		Available translation suggestions: <span id="count">0</span>
+	</div>
+	<div class="form-wait" id="wait1">&nbsp;</div>
+	<div class="form-wait" id="wait2">&nbsp;</div>
+
+	<div>
+	<button type="button" id="apertium-key" onClick="setApiKey('apertiumkey','Enter your Apertium API key.');">Set Apertium key</button>
+	<button type="button" id="bing-key" onClick="setApiKey('bingkeyid','Enter your Bing API ID.') && setApiKey('bingkeysecret','Enter your Bing API Secret.');">Set Bing key</button>
+	</div>
+	<br/>
+	<div><small>Obtain an <a href="http://api.apertium.org/register.jsp">Apertium API key here</a></small></div>
+	<div><small>Obtain a <a href="http://www.microsoft.com/web/post/using-the-free-bing-translation-apis">Bing API key here</a></small></div>
+
+	<div class="instructions">
+		<h3>
+			Instructions [<span class="slidetoogleTitle">click here to
+				view</span>]
+		</h3>
+		<div class="slidetoogleContent" style="display: none;">
+			<ol>
+				<li>Type or paste the source text to translate.</li>
+				<li>Select source and target language.</li>
+				<li>Press the 'Translate' button.</li>
+				<li>You may start typing your translation immediately.</li>
+				<li>However, for increasing the amount of data collected and
+					improving the experience, we suggest you to wait until the animated
+					rotating circle icon dissapears.</li>
+				<li>Ready! Choose among the translation suggestions for saving
+					keystrokes and getting ultra-fast translation!</li>
+				<li>If none of the suggestions fits into your translation at
+					this moment, just keep on typing.</li>
+				<li>Insert the selected suggestion by pressing the enter or tab
+					key, or by clicking with your mouse.</li>
+				<li>Move along the suggestions by using the arrow keys or your
+					mouse.</li>
+				<li>The first suggestions in the list can also be selected by
+					pressing the control key and the number corresponding to their
+					position.</li>
+				<li>Suggestion list is resetted every time you press the space
+					bar.</li>
+				<li>Suggestions are only proposed while typing at the end of
+					the text.</li>
+				<li>Selecting a particular suggestion removes it and some other
+					related suggestions, so they will not be proposed anymore (even if
+					you delete its text in the translation area).</li>
+				<li>You may optionally choose the length (number of words) of
+					the longest suggestions.</li>
+				<li>Note that, in case you need more space, some browsers will
+					let you resize the text areas for the source text and its
+					translation by using a handle (grabber) located at the bottom-right
+					corner of each area.</li>
+				<li>You will need to provide your keys (in case you have them) for the translation services 
+					you want to use. These keys will be stored unencrypted in the browser as cookies. 
+        			They could also be sent unencrypted to the server, although the server
+        			will only maintain them for the current session.</li>
+			</ol>
+		</div>
+	</div>
+
+	<div id="footer">
+		<p>Service is beta and provided with no warranty. Length
+			restrictions may apply to source text.</p>
+		<p>
+			Tested on Google Chrome 19.0, Chromium 18.0 and Firefox 12.0.
+			Translation suggestions are obtained via the batch <a
+				href="http://api.apertium.org">API</a> of <a
+				href="http://www.apertium.org">Apertium</a>.
+		</p>
+		<p>&copy; Transducens Research Group, Universitat d'Alacant, MMXII.
+		</p>
+	</div>
+
+	<script type="text/javascript"
+		src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript"
+		src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+
+	<!-- Style 'Redmond' for JQuery UI: -->
+	<link rel="stylesheet"
+		href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/themes/redmond/jquery-ui.css">
+
+	<!-- Key combinations with JQuery: -->
+	<!-- https://github.com/OscarGodson/jKey -->
+	<script type="text/javascript" src="libjs/jkey/jquery.jkey-1.2.js"></script>
+
+	<!-- Regular expression library: -->
+	<!-- http://xregexp.com/ -->
+	<script type="text/javascript" src="libjs/xregexp/xregexp-min.js"></script>
+	
+	<link rel="stylesheet" href="css/mystyle.css">
+
+	<script type="text/javascript" src="libjs/forecat-frontend.js"></script>
+	
+</body>
+</html>

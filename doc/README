@@ -1,0 +1,61 @@
+
+INSTALLATION FOR DEVELOPMENT UNDER ECLIPSE
+
+1. Install OpenJDK 6 in your system (in Ubuntu, sudo apt-get install openjdk-6-jdk). 
+
+2. Install Git in your system (in Ubuntu, sudo apt-get install git); note: you may also use JGit for 
+Eclipse.
+
+3. Download and uncompress 'Eclipse IDE for Java EE Developers' from http://www.eclipse.org/downloads/
+
+4. Run the Eclipse executable.
+
+5. Install the 'Google Plugin for Eclipse' for your version of Eclipse by following the instructions 
+in https://developers.google.com/eclipse/docs/download; you just need to select the plugin itself,
+and the Google Web Toolkit SDK and Google App Engine SDK under group 'SDK'.
+
+6. Install the Egit Eclipse plugin by using the URL address in http://www.eclipse.org/egit/download/
+and selecting it under group 'Collaboration'. 
+
+7. Select 'Import' > 'Projects from Git'; introduce the clone URI for forecaat that you may find 
+after clicking on the Clone button in https://github.org/jaspock/forecat/; wait until the 
+files have been downloaded and then select 'Import existing project'.
+
+8. The .classpath and the .project files for Eclipse are already included in the repository; the .classpath
+only contains relative paths so, in principle, it should not need any review. However, there is a global 
+preference option that you need to change to avoid a issue produced by the App Engine SDK: go to 
+Window > Preferences > Google > Error,warnings and in the App Engine section set to 'Warning' the option 
+'Use of non-whitelisted JRE type' (see the comment before 
+org.forecat.server.translation.TranslationServerSide.translateApertiumLocalInstallation for more
+information about this).
+
+9. Make sure that Eclipse is using JDK6 for your project by looking at the project properties.
+
+10. Forecat has been tested with Google App Engine SDK for Java 1.7.3 and Google Web Toolkit SDK 2.5; 
+in case the application does not work and your Google Plugin for Eclipse includes a different version, 
+you may download these versions from https://code.google.com/p/googleappengine/downloads/list?can=1&q=java 
+and https://developers.google.com/web-toolkit/versions, respectively. Make Eclipse use those libraries 
+by selecting them under section Google in the project properties. 
+
+11. Install Apertium if you plan to use it from a local installation (also set variable 
+org.forecat.server.utils.PropertiesServer.apertiumLocation to LOCAL_APERTIUM).
+
+12. Change org.forecat.client.utils.PropertiesBrowserSide.executionMode to a different value if you know
+what you are doing and you need to.
+
+13. Run the project as either a GWT 'Web Application' or as a 'Java Application' (org.forecat.console.Main). 
+For the latter, you need to create a file 'forecat.console.properties' with the API keys; put the file in 
+the 'resources' directory with a content like this:
+
+apertiumkey = <YOURAPERTIUMKEY>
+bingkeyid = <YOUBINGID>
+bingkeysecret = <YOURBINGSECRET>
+
+Do not add this file to the repository as it will contain your personal keys.
+
+
+INSTALLATION FOR COMMAND-LINE (ANT) DEVELOPMENT
+
+There is also a build.xml file included if you prefer to use ant and command line during development. 
+You will need to download and install the Google Web Toolkit SDK and set properties 'gwt.sdk' 
+and 'junit.path' in the beginning of the file.

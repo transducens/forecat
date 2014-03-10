@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+
+<!--
+	The Apertium's Cat Tool
+	(c) 2012 Juan Antonio Pérez-Ortiz, based on an idea by Mikel L. Forcada
+	Transducens Research Group, Universitat d'Alacant
+-->
+
+	<title>Apertium's Cat Tool</title>	
+</head>
+
+<body>
+	<div id="title">Apertium's Cat Tool &nbsp;
+		<!-- Cat icons: http://www.fasticon.com/freeware/cat-icons/ -->
+		<!-- Keyboard icon: http://www.iconfinder.com/icondetails/40804/64/ -->
+		<img class="bottom" src="keyboard-48.png" alt=""  style="vertical-align:text-bottom;"/>
+	</div>
+
+	<form>
+	<div class="form-from">
+ 		<label>Source text</label>
+		<textarea id="from" rows="6" cols="85"></textarea>
+	</div>
+	<div class="form-translate">
+		<button type="button" id="translate" onClick="sliceAndTranslate();">Translate</button>
+
+		&nbsp;&nbsp; Length of longest suggestions:
+		<select id="maxlength" onChange="setMaxLength(value);">
+			<option value="0">0</option>
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4" selected="selected">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+		</select>
+		
+		&nbsp;&nbsp; Languages:	
+		<select id="lang" onChange="setLanguagePair(value)">
+			<option value="en-es">English to Spanish</option>
+			<option value="es-en">Spanish to English</option>
+		</select>
+	</div>
+	
+	<div class="form-to">
+		<label>Translated text</label>
+		<textarea id="to" rows="6" cols="85"></textarea>
+	</div>
+	</form>
+
+	<div class="form-wait" id="segmentcount">
+		Available translation suggestions: <span id="count">0</span>
+	</div>
+	<div class="form-wait" id="wait1">
+		&nbsp;
+	</div>
+	<div class="form-wait" id="wait2">
+		&nbsp;
+	</div>
+
+	<div class="instructions">
+		<h3>Instructions [<span class="slidetoogleTitle">click here to view</span>]</h3>
+		<div class="slidetoogleContent" style="display: none;">
+		<ol>
+			<li>Type or paste the source text to translate.</li>
+			<li>Select source and target language.</li> 
+			<li>Press the 'Translate' button.</li>
+			<li>You may start typing your translation immediately.</li>
+			<li>However, for increasing the amount of data collected and improving the experience, we suggest you to wait until the animated rotating circle icon dissapears.</li>
+			<li>Ready! Choose among the translation suggestions for saving keystrokes and getting ultra-fast translation!</li>
+			<li>If none of the suggestions fits into your translation at this moment, just keep on typing.</li>
+			<li>Insert the selected suggestion by pressing the enter or tab key, or by clicking with your mouse.</li>
+			<li>Move along the suggestions by using the arrow keys or your mouse.</li>
+			<li>The first suggestions in the list can also be selected by pressing the control key and the number corresponding to their position.</li>
+			<li>Suggestion list is resetted every time you press the space bar.</li>
+			<li>Suggestions are only proposed while typing at the end of the text.</li>
+			<li>Selecting a particular suggestion removes it and some other related suggestions, so they will not be proposed anymore (even if you delete its text in the translation area).</li>
+			<li>You may optionally choose the length (number of words) of the longest suggestions.</li>
+			<li>Note that, in case you need more space, some browsers will let you resize the text areas for the source text and its translation 	by using a handle (grabber) located at the bottom-right corner of each area.</li>
+		</ol>
+		</div>
+	</div>	
+
+	<div id="footer">
+		<p>
+			Service is beta and provided with no warranty. 
+			Length restrictions may apply to source text. 
+		</p>
+		<p>
+			Tested on Google Chrome 19.0, Chromium 18.0 and Firefox 12.0.
+			Translation suggestions are obtained via the batch <a href="http://api.apertium.org">API</a>
+			of <a href="http://www.apertium.org">Apertium</a>.
+		</p>
+		<p>
+			&copy; Transducens Research Group, Universitat d'Alacant, 2012.
+		</p>
+	</div>
+	
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+
+	<!-- Style 'Redmond' for JQuery UI: -->
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/themes/redmond/jquery-ui.css">
+
+	<!-- Key combinations with JQuery: -->
+	<!-- https://github.com/OscarGodson/jKey -->
+	<script type="text/javascript" src="jquery.jkey-1.2.js"></script>
+
+	<!-- Regular expression library -->
+	<!-- http://xregexp.com/ -->
+	<script type="text/javascript" src="xregexp-min.js"></script>
+
+	<!-- <script type="text/javascript" src="http://api.apertium.org/JSLibrary.js?key=MYAPIKEY"></script>  -->
+
+	<!-- Apertium Javascript library not longer used; Apertium REST API is directly used -->
+	<!-- <script type="text/javascript" src="apertium-batch.js?key=MYAPIKEY"></script> -->
+
+	<link rel="stylesheet" href="mystyle.css">
+
+	<script type="text/javascript" src="apertium-cat.js"></script>
+
+</body>
+</html>

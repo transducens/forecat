@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+fieldset { margin-bottom: 1em; }
+input { display: block; margin-bottom: .25em; }
+#print-output {
+  width: 100%;
+}
+.print-output-line {
+  white-space: pre;
+  padding: 5px;
+  font-family: monaco, monospace;
+  font-size: .7em;
+}
+
+</style>
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+</head>
+<body>
+  <form>
+  <fieldset>
+    <label for="target">Type Something:</label>
+    <input id="target" type="text" />
+  </fieldset>
+</form>
+<button id="other">
+  Trigger the handler
+</button>
+<script type="text/javascript" src="/scripts/events.js"></script>
+<script>
+
+(function($) {
+  $.print = function( message, insertType ) {
+    insertType = insertType || "append";
+    if ( typeof(message) == "object" ) {
+      var string = "{<br>",
+          values = [],
+          counter = 0;
+      $.each( message, function( key, value ) {
+        if ( value && value.nodeName ) {
+          var domnode = "&lt;" + value.nodeName.toLowerCase();
+          domnode += value.className ? " class='" + value.className + "'" : "";
+          domnode += value.id ? " id='" + value.id + "'" : "";
+          domnode += "&gt;";
+          value = domnode;
+        }
+        values[counter++] = key + ": " + value;
+      });
+      string += values.join( ",<br>" );
+      string += "<br>}";
+      message = string;
+    }
+
+    var $output = $( "#print-output" );
+
+    if ( !$output.length ) {
+      $output = $( "<div id='print-output' />" ).appendTo( "body" );
+    }
+
+    var newMsg = $('<div />', {
+      "class": "print-output-line",
+      html: message
+    });
+
+    $output[insertType]( newMsg );
+  };
+})(jQuery);
+
+var xTriggered = 0;
+$('#target').keypress(function(event) {
+   xTriggered++;
+   var msg = 'Handler for .keyup() called ' + xTriggered + ' time(s).';
+  console.log("Length of input box: ",$("#target").val().length);
+  console.log("Caret position: ",$("#target")[0].selectionStart);
+  $.print(msg, 'html');
+  $.print(event);
+}).keydown(function(event) {
+  if (event.which == 13) {
+    event.preventDefault();
+  }  
+});
+
+$('#other').click(function() {
+  $('#target').keyup();
+});</script>
+
+</body>
+</html>

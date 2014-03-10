@@ -1,0 +1,31 @@
+package org.forecat.shared.ranker;
+
+import java.io.Serializable;
+
+import com.google.gwt.user.client.rpc.IsSerializable;
+
+public class RankerInput implements Serializable, IsSerializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	int position;
+
+	public int getPosition() {
+		return position;
+	}
+
+	public void setPosition(int position) {
+		this.position = position;
+	}
+
+	public RankerInput(int position) {
+		super();
+		this.position = position;
+	}
+
+	public RankerInput() {
+		super();
+	}
+
+}
