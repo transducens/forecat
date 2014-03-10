@@ -1,16 +1,16 @@
-*.class
-
-# Package Files #
-*.jar
-*.war
-
-# gwt caches and compiled units #
-war/gwt_bree/
-gwt-unitCache/
-
-# boilerplate generated classes #
-.apt_generated/
-
-# more caches and things from deploy #
-war/WEB-INF/deploy/
-war/WEB-INF/classes/
+/gwt-unitCache/
+/test-classes/
+/war/forecat/*.cache.png
+/war/forecat/*.cache.html
+/war/forecat/*.gwt.rpc
+/war/WEB-INF/deploy/
+/war/WEB-INF/classes/
+/console_log/
+/src/org/forecat/console/forecat.console.properties
+/resources/forecat.console.properties
+/war/WEB-INF/lib/appengine*
+/war/WEB-INF/lib/datanucleus*
+/war/WEB-INF/lib/geronimo*
+/war/WEB-INF/lib/gwt-servlet*
+/war/WEB-INF/lib/jdo2-api*
+/war/WEB-INF/lib/jsr107*

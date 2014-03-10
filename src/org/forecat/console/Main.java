@@ -26,7 +26,6 @@ import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
 import org.forecat.shared.languages.LanguagesShared.Engine;
 import org.forecat.shared.ranker.RankerComposite;
-import org.forecat.shared.ranker.RankerLM;
 import org.forecat.shared.ranker.RankerLongestFirst;
 import org.forecat.shared.ranker.RankerLongestShortestFirst;
 import org.forecat.shared.ranker.RankerLongestShortestOnly;
@@ -186,7 +185,7 @@ public class Main {
 		opt.addOption("M", true, "Use cachetrans");
 		opt.addOption("D", false, "Use dictionarium");
 		opt.addOption("P", true, "Use phraseum, with freq value.");
-		opt.addOption("S", true, "Sorting method (s|l|sl|ls|lm|sm|sc)");
+		opt.addOption("S", true, "Sorting method (s|l|sl|ls|sm|sc)");
 		opt.addOption("d", true, "Deleting method (n|p|ip|ps|e)");
 		opt.addOption("T", false, "Use only trusted segments");
 		opt.addOption("ssp", false, "Penalty for selecting a suggestion");
@@ -383,9 +382,6 @@ public class Main {
 		}
 		if (val.equals("ls")) {
 			rs = new RankerLongestShortestFirst();
-		}
-		if (val.equals("lm")) {
-			rs = new RankerLM();
 		}
 		if (val.equals("sm")) {
 			// sortingMethod = 6;
