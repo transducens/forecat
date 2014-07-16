@@ -13,6 +13,9 @@
 
   <!-- Other module inherits                                      -->
 
+  <!--  SuperDevMode -->
+  <add-linker name="xsiframe"/>
+
   <!-- Specify the app entry point class.                         -->
   <entry-point class='org.forecat.client.Forecat'/>
   

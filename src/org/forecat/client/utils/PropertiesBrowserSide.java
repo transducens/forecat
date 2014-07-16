@@ -13,6 +13,6 @@ public final class PropertiesBrowserSide {
 	 * Execution mode. This is only used in client code.
 	 */
 	// public static final ExecutionModes executionMode = ExecutionModes.SERVER_MODE;
-	public static final ExecutionModes executionMode = ExecutionModes.MIXED_MODE;
+	public static final ExecutionModes executionMode = ExecutionModes.BROWSER_MODE;
 
 }

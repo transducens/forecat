@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+<script src="./bower_components/platform/platform.js"></script>
+<link rel="import" href="elements/translation-autocomplete.html">
+
+<!-- google-chrome --allow-file-access-from-files -->
+
+</head>
+<body>
+
+<div>
+<translation-autocomplete id="autocomplete" q="mandelbrot">
+<ul class="data-source">
+   <li>ActionScript</li>
+   <li>AppleScript</li>
+   <li>Asp</li>
+   <li>BASIC</li>
+   <li>C</li>
+   <li>C++</li>
+   <li>Clojure</li>
+   <li>COBOL</li>
+   <li>ColdFusion</li>
+   <li>Dart</li>
+</ul> 
+</translation-autocomplete>
+</div>
+
+<style>
+      div { width: 300px;}
+      translation-autocomplete { font: bold 16px cursive;}
+</style>
+
+<script>
+// a en lugar de document
+var a = document.querySelector('#autocomplete');
+a.addEventListener('translationready', function (e) {
+	console.log("Allowed languages outside through API:"+ a.languages());
+	console.log("Allowed languages outside through event:"+ JSON.stringify(e.detail));
+});
+</script>
+
+</body>
