@@ -7,7 +7,7 @@ import org.forecat.shared.SessionBrowserSideConsole;
 import org.forecat.shared.ranker.RankerComposite;
 import org.forecat.shared.ranker.RankerLongestFirst;
 import org.forecat.shared.ranker.RankerLongestShortestFirst;
-import org.forecat.shared.ranker.RankerLongestShortestOnly;
+import org.forecat.shared.ranker.RankerLongestShortestFromPosition;
 import org.forecat.shared.ranker.RankerPosition;
 import org.forecat.shared.ranker.RankerShared;
 import org.forecat.shared.ranker.RankerShortestFirst;
@@ -67,7 +67,7 @@ public class Forecat implements EntryPoint {
 			} else if (sortMethod.equals("longshort")) {
 				rb = new RankerLongestShortestFirst();
 			} else if (sortMethod.equals("pc")) {
-				rb = new RankerComposite(new RankerPosition(), new RankerLongestShortestOnly());
+				rb = new RankerComposite(new RankerPosition(), new RankerLongestShortestFromPosition());
 			} else {
 				rb = new RankerShortestFirst();
 			}

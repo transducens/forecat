@@ -14,6 +14,8 @@ import org.forecat.shared.utils.UtilsShared;
 
 public class SuggestionsTorchShared extends SuggestionsBasic {
 
+	private static final long serialVersionUID = -4387475700040466631L;
+
 	@Override
 	public List<SuggestionsOutput> obtainSuggestions(SuggestionsInput input,
 			Map<String, List<SourceSegment>> segmentPairs, Map<String, Integer> segmentCounts) {
@@ -31,7 +33,7 @@ public class SuggestionsTorchShared extends SuggestionsBasic {
 							// Simple estimation of feasibility: ratio of lengths
 							preoutput.add(new SuggestionsOutput(e.getKey(), e.getKey().length(), ss
 									.getId() + "." + SubIdProvider.getSubId(e.getKey(), ss), ss
-									.getPosition()));
+									.getPosition(), e.getKey().split(" ").length));
 						}
 					}
 				}

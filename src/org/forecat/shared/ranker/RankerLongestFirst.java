@@ -4,12 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.forecat.shared.suggestions.SuggestionsOutput;
+import org.forecat.shared.utils.Quicksort;
+
+/**
+ * Chooses the longest suggestions
+ * 
+ * @author Daniel Torregrosa
+ * 
+ */
 
 public class RankerLongestFirst extends RankerShared {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 896290267380126773L;
 
 	@Override

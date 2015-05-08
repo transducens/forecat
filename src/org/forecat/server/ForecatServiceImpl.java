@@ -12,7 +12,7 @@ import org.forecat.server.translation.TranslationServerSide;
 import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
 import org.forecat.shared.ranker.RankerComposite;
-import org.forecat.shared.ranker.RankerLongestShortestOnly;
+import org.forecat.shared.ranker.RankerLongestShortestFromPosition;
 import org.forecat.shared.ranker.RankerPosition;
 import org.forecat.shared.ranker.RankerShared;
 import org.forecat.shared.selection.SelectionInput;
@@ -96,7 +96,7 @@ public class ForecatServiceImpl extends RemoteServiceServlet implements ForecatS
 
 		// HACAT2013
 		su = new SuggestionsRanker(new SuggestionsBasic(), new RankerComposite(
-				new RankerPosition(), new RankerLongestShortestOnly()));
+				new RankerPosition(), new RankerLongestShortestFromPosition()));
 		RankerShared.setMaxSuggestions(4);
 		// HACAT2013
 

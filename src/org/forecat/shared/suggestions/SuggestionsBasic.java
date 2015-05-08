@@ -52,7 +52,7 @@ public class SuggestionsBasic extends SuggestionsShared implements IsSerializabl
 					&& segmentCounts.get(e.getKey()) > 0) {
 				// Simple estimation of feasibility: ratio of lengths
 				preoutput.add(new SuggestionsOutput(e.getKey(), e.getKey().length(), closerId,
-						closerPosition));
+						closerPosition, e.getKey().split(" ").length));
 			}
 		}
 

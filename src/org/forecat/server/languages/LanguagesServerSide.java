@@ -46,9 +46,10 @@ public class LanguagesServerSide extends LanguagesShared {
 			obtainLanguagesApertiumLocalInstallation(outputList, inputList);
 		}
 		obtainLanguagesBingAPI(outputList, inputList);
-		obtainLanguagesCacheTrans(outputList, inputList);
+		obtainLanguagesMesplaTrans(outputList, inputList);
 		obtainLanguagesDictionarium(outputList, inputList);
 		obtainLanguagesPhraseum(outputList, inputList);
+		obtainLanguagesDud(outputList, inputList);
 
 		// If any of the engines worked, throw the exception.
 		if (outputList.isEmpty()) {
@@ -81,7 +82,17 @@ public class LanguagesServerSide extends LanguagesShared {
 		addLanguagePair(outputList, "es", "en", Engine.PHRASEUM.toString());
 	}
 
-	private void obtainLanguagesCacheTrans(List<LanguagesOutput> outputList,
+	private void obtainLanguagesDud(List<LanguagesOutput> outputList, List<LanguagesInput> inputList) {
+
+		if ((LanguagesInput.searchEngine(inputList, Engine.DUD.toString())) == -1) {
+			return;
+		}
+
+		addLanguagePair(outputList, "en", "es", Engine.DUD.toString());
+		addLanguagePair(outputList, "es", "en", Engine.DUD.toString());
+	}
+
+	private void obtainLanguagesMesplaTrans(List<LanguagesOutput> outputList,
 			List<LanguagesInput> inputList) {
 
 		if ((LanguagesInput.searchEngine(inputList, Engine.CACHETRANS.toString())) == -1) {
@@ -96,6 +107,8 @@ public class LanguagesServerSide extends LanguagesShared {
 						Engine.CACHETRANS.toString());
 			}
 		}
+
+		return;
 	}
 
 	private void obtainLanguagesApertiumAPI(List<LanguagesOutput> outputList,
@@ -156,6 +169,10 @@ public class LanguagesServerSide extends LanguagesShared {
 			}
 			Translate.setClientId(s[0]);
 			Translate.setClientSecret(s[1]);
+
+			// Translate.setClientId("bbcat");
+			// TODO: do not publish keys in the repository
+			// Translate.setClientSecret("lndluhebDf++b0eouRJrHw5NRww80RaxfCwdV0yjIts=");
 
 			// Getting language names from Bing:
 			// for(Language lang : Language.values()) System.out.println(lang.name() + " : " +

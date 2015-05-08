@@ -16,6 +16,12 @@ public class SuggestionsOutput implements Serializable, Comparable<SuggestionsOu
 	 * Position of origin of the suggestion (in source language)
 	 */
 	int position;
+
+	/**
+	 * Number of words of the origin suggestion
+	 */
+	int numberWords;
+
 	/**
 	 * Id of the SourceSegment
 	 */
@@ -34,11 +40,12 @@ public class SuggestionsOutput implements Serializable, Comparable<SuggestionsOu
 	}
 
 	public SuggestionsOutput(String suggestionText, double suggestionFeasibility, String id,
-			int position) {
+			int position, int numberWords) {
 		this.suggestionText = suggestionText;
 		this.suggestionFeasibility = suggestionFeasibility;
 		this.id = id;
 		this.position = position;
+		this.numberWords = numberWords;
 	}
 
 	public void setSuggestionText(String suggestionText) {
@@ -63,6 +70,10 @@ public class SuggestionsOutput implements Serializable, Comparable<SuggestionsOu
 
 	public int getPosition() {
 		return position;
+	}
+
+	public int getNumberWords() {
+		return numberWords;
 	}
 
 	/**

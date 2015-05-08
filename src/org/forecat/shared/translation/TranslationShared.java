@@ -32,10 +32,6 @@ public abstract class TranslationShared implements IsSerializable, Serializable 
 
 		int numchars = 0;
 
-		if (words.length < maxSegmentLength) {
-			return sourceSegments;
-		}
-
 		for (int i = 0; i < wordCount; ++i) {
 			String sourceText = "";
 			String delim = "";

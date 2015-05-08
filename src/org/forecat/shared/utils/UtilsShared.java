@@ -22,19 +22,15 @@ public class UtilsShared {
 	}
 
 	public static boolean isPrefix(String possiblePrefix, String string) {
-		boolean isPrefix = false;
 		int i = 0;
 
 		while (i < possiblePrefix.length() && i < string.length()) {
 			if (possiblePrefix.charAt(i) != string.charAt(i)) {
-				break;
-			}
-			if (i == possiblePrefix.length() - 1) {
-				isPrefix = true;
+				return false;
 			}
 			++i;
 		}
-		return isPrefix;
+		return i == possiblePrefix.length();
 	}
 
 	public static boolean isSuffix(String possibleSuffix, String string) {

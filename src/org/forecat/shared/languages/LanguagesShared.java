@@ -20,6 +20,7 @@ public abstract class LanguagesShared {
 		aMap.put("ca", "Catalan");
 		aMap.put("ca_valencia", "Valencian Catalan");
 		aMap.put("cs", "Czech");
+		aMap.put("cz", "Czech");
 		aMap.put("cy", "Welsh");
 		aMap.put("da", "Danish");
 		aMap.put("de", "German");
@@ -81,9 +82,14 @@ public abstract class LanguagesShared {
 		aMapDevelopment.put("eng", "English");
 		aMapDevelopment.put("kaz", "Kazakh");
 		aMapDevelopment.put("es", "Spanish");
-		aMapDevelopment.put("esc", "Spanish"); // For corpus tests
+		aMapDevelopment.put("esc", "SpanishC"); // For corpus tests
 		aMapDevelopment.put("eu", "Basque");
 		aMapDevelopment.put("gl", "Galician");
+		aMapDevelopment.put("br", "Breton");
+		aMapDevelopment.put("fr", "French");
+		aMapDevelopment.put("eu", "Euskara");
+		aMapDevelopment.put("esv", "SpanishV");
+		aMapDevelopment.put("cz", "czech");
 
 		languageNames = Collections.unmodifiableMap(aMapDevelopment); // use in development mode
 		// languageNames = Collections.unmodifiableMap(aMap); // use in production mode
@@ -91,7 +97,7 @@ public abstract class LanguagesShared {
 
 	public enum Engine {
 		APERTIUM("apertium"), GOOGLE("google"), BING("bing"), CACHETRANS("cachetrans"), DICTIONARIUM(
-				"dictionarium"), PHRASEUM("phraseum");
+				"dictionarium"), PHRASEUM("phraseum"), DUD("dud");
 
 		private final String name;
 

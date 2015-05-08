@@ -1,5 +1,7 @@
 package org.forecat.console;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeSet;
@@ -37,9 +39,13 @@ public class TestOutput {
 	private static ArrayList<ArrayList<Integer>> coveragesByLength = new ArrayList<ArrayList<Integer>>();
 	private static ArrayList<ArrayList<Integer>> numSuggestionsByLength = new ArrayList<ArrayList<Integer>>();
 
-	private static StringBuilder out = new StringBuilder();
+	private static FileWriter out = null;
 
 	private static ArrayList<Integer> suggestionPosition = new ArrayList<Integer>();
+
+	public static void setOut(FileWriter o) {
+		out = o;
+	}
 
 	public static void addAllOk(int i) {
 		allOk += i;
@@ -102,7 +108,6 @@ public class TestOutput {
 
 	public static void addMatch(int source, int target) {
 
-		System.out.println(" MATCH " + source + " " + target);
 		if (!sourceTargetCorrespondenceSelected.containsKey(source)) {
 			sourceTargetCorrespondenceSelected.put(source, new HashMap<Integer, Integer>());
 			maxSourceSelected = Math.max(source, maxSourceSelected);
@@ -118,7 +123,12 @@ public class TestOutput {
 	}
 
 	public static void addOutput(String s) {
-		out.append(s);
+		try {
+			out.write(s);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public static void addCorrespondence(char letter, int position) {
@@ -136,97 +146,187 @@ public class TestOutput {
 		}
 	}
 
-	public static String getPlot() {
+	public static void getPlot() {
 
-		out.append("# 1:Longitud\n");
-		out.append("# 2:Pulsaciones\n");
-		out.append("# 3:Sugerencias ofrecidas\n");
-		out.append("# 4:Sugerencias usadas\n");
+		try {
+			out.write("# 1:Longitud\n");
+			out.write("# 2:Pulsaciones\n");
+			out.write("# 3:Sugerencias ofrecidas\n");
+			out.write("# 4:Sugerencias usadas\n");
 
-		for (int i = 0; i < keyPress.size(); i++) {
-			out.append(sentence_length.get(i));
-			out.append("\t");
-			out.append(keyPress.get(i));
-			out.append("\t");
-			out.append(suggestions_offered.get(i));
-			out.append("\t");
-			out.append(suggestions_used.get(i));
-			out.append("\n");
-		}
-
-		out.append("## Correlacion 1:2 -> ");
-		out.append(getPearsonCorrelation(sentence_length, keyPress));
-		out.append("\n## Correlacion 1:4 -> ");
-		out.append(getPearsonCorrelation(sentence_length, suggestions_used));
-		out.append("\n");
-
-		SummaryStatistics ss = new SummaryStatistics();
-		TDistribution td = new TDistribution(keyPress.size() - 1);
-
-		int press = 0;
-		int length = 0;
-
-		for (int i = 0; i < keyPress.size(); i++) {
-			ss.addValue(((double) keyPress.get(i)) / ((double) sentence_length.get(i)));
-			press += keyPress.get(i);
-			length += sentence_length.get(i);
-		}
-
-		out.append("\n## Mejora media | ");
-		out.append(((double) press / (double) length));
-		out.append("\n## Mejora por frase | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(keyPress.size()));
-		out.append("\n");
-
-		System.out.println("MEJORA MEDIA: " + ss.getMean());
-
-		ss.clear();
-		for (int i = 0; i < suggestions_offered.size(); i++) {
-			ss.addValue(suggestions_offered.get(i));
-		}
-
-		out.append("## Media sugerencias ofrecidas | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(suggestions_offered.size()));
-		out.append("\n");
-
-		ss.clear();
-		for (int i = 0; i < keyPress.size(); i++) {
-			ss.addValue(suggestions_used.get(i));
-		}
-
-		out.append("## Media sugerencias usadas | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(keyPress.size()));
-		out.append("\n");
-
-		ss.clear();
-		for (int i = 0; i < suggestions_used.size(); i++) {
-			if (suggestions_offered.get(i) == 0) {
-				ss.addValue(0);
-			} else {
-				ss.addValue(((double) suggestions_used.get(i))
-						/ ((double) suggestions_offered.get(i) + 1));
+			for (int i = 0; i < keyPress.size(); i++) {
+				out.write("" + sentence_length.get(i));
+				out.write("\t");
+				out.write("" + keyPress.get(i));
+				out.write("\t");
+				out.write("" + suggestions_offered.get(i));
+				out.write("\t");
+				out.write("" + suggestions_used.get(i));
+				out.write("\n");
 			}
-		}
 
-		out.append("## Sugerencias usadas / Sugerencias ofrecidas | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(suggestions_used.size()));
-		out.append("\n");
+			out.write("## Correlacion 1:2 -> ");
+			out.write(((Double) getPearsonCorrelation(sentence_length, keyPress)).toString());
+			out.write("\n## Correlacion 1:4 -> ");
+			out.write(((Double) getPearsonCorrelation(sentence_length, suggestions_used))
+					.toString());
+			out.write("\n");
 
-		{
-			int withSug = 0;
+			SummaryStatistics ss = new SummaryStatistics();
+			TDistribution td = new TDistribution(Math.max(2, keyPress.size() - 1));
+
+			int press = 0;
+			int length = 0;
+
+			for (int i = 0; i < keyPress.size(); i++) {
+				ss.addValue(((double) keyPress.get(i)) / ((double) sentence_length.get(i)));
+				press += keyPress.get(i);
+				length += sentence_length.get(i);
+				out.write("\n##= ");
+				out.write("" + keyPress.get(i));
+				out.write(":");
+				out.write("" + sentence_length.get(i));
+			}
+
+			out.write("\n## Mejora media | ");
+			out.write(((Double) ((double) press / (double) length)).toString());
+			out.write("\n## Press / length | ");
+			out.write("" + press);
+			out.write(" ");
+			out.write("" + length);
+			out.write(" ");
+			out.write("\n## Mejora por frase | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(keyPress.size()))).toString());
+			out.write("\n");
+
+			System.out.println("MEJORA MEDIA: " + ((double) press / (double) length) + " " + press
+					+ " " + length);
+
+			ss.clear();
+			for (int i = 0; i < suggestions_offered.size(); i++) {
+				ss.addValue(suggestions_offered.get(i));
+			}
+
+			out.write("## Media sugerencias ofrecidas | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(suggestions_offered.size())))
+					.toString());
+			out.write("\n");
+
+			ss.clear();
+			for (int i = 0; i < keyPress.size(); i++) {
+				ss.addValue(suggestions_used.get(i));
+			}
+
+			out.write("## Media sugerencias usadas | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(keyPress.size()))).toString());
+			out.write("\n");
+
+			ss.clear();
+			for (int i = 0; i < suggestions_used.size(); i++) {
+				if (suggestions_offered.get(i) == 0) {
+					ss.addValue(0);
+				} else {
+					ss.addValue(((double) suggestions_used.get(i))
+							/ ((double) suggestions_offered.get(i) + 1));
+				}
+			}
+
+			out.write("## Sugerencias usadas / Sugerencias ofrecidas | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(suggestions_used.size()))).toString());
+			out.write("\n");
+
+			{
+				int totalUsed = 0;
+				int totalOffered = 0;
+				for (int i = 0; i < suggestions_used.size(); i++) {
+
+					totalUsed += suggestions_used.get(i);
+					totalOffered += suggestions_offered.get(i);
+
+				}
+
+				out.write("## ASR COBERTURA | ");
+
+				out.write(((Double) (((double) totalUsed) / ((double) totalOffered))).toString());
+				out.write("\n");
+			}
+
+			{
+				int withSug = 0;
+				int used = 0;
+				for (Event e : events) {
+					if (e.getChar() == ' ')
+						continue;
+					if (e.hasSuggestions())
+						withSug++;
+					if (e.usedSuggestion())
+						used++;
+				}
+				out.write("## ASG | ");
+				out.write(((double) used / (double) withSug) + "\n");
+			}
+
+			ss.clear();
+			for (int i = 0; i < precs.size(); i++) {
+				ss.addValue((precs.get(i)));
+			}
+
+			out.write("## Precision | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(precs.size()))).toString());
+			out.write("\n");
+
+			ss.clear();
+			for (int i = 0; i < recs.size(); i++) {
+				ss.addValue((recs.get(i)));
+			}
+
+			out.write("## Cobertura | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(recs.size()))).toString());
+			out.write("\n");
+
+			ss.clear();
+			for (int i = 0; i < suggestionPosition.size(); i++) {
+				ss.addValue((suggestionPosition.get(i)));
+			}
+
+			out.write("## Suggestion Position | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(recs.size()))).toString());
+			out.write("\n");
+
+			double precision = (double) allSugOk / (double) (allSugOk + allSugNok);
+			double recall = (double) allSugOk / (double) allOk;
+
+			out.write("## Precision2 | ");
+			out.write(precision + "\n");
+			out.write("## Cobertura2 | ");
+			out.write(recall + "\n");
+
+			ss.clear();
+			int sentence = 1;
 			int used = 0;
+			int withSug = 0;
+
 			for (Event e : events) {
 				if (e.getChar() == ' ')
 					continue;
@@ -234,177 +334,118 @@ public class TestOutput {
 					withSug++;
 				if (e.usedSuggestion())
 					used++;
-			}
-			out.append("## ASG | ");
-			out.append(((double) used / (double) withSug) + "\n");
-		}
-
-		ss.clear();
-		for (int i = 0; i < precs.size(); i++) {
-			ss.addValue((precs.get(i)));
-		}
-
-		out.append("## Precision | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(precs.size()));
-		out.append("\n");
-
-		ss.clear();
-		for (int i = 0; i < recs.size(); i++) {
-			ss.addValue((recs.get(i)));
-		}
-
-		out.append("## Cobertura | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(recs.size()));
-		out.append("\n");
-
-		ss.clear();
-		for (int i = 0; i < suggestionPosition.size(); i++) {
-			ss.addValue((suggestionPosition.get(i)));
-		}
-
-		out.append("## Suggestion Position | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(recs.size()));
-		out.append("\n");
-
-		double precision = (double) allSugOk / (double) (allSugOk + allSugNok);
-		double recall = (double) allSugOk / (double) allOk;
-
-		out.append("## Precision2 | ");
-		out.append(precision + "\n");
-		out.append("## Cobertura2 | ");
-		out.append(recall + "\n");
-
-		ss.clear();
-		int sentence = 1;
-		int used = 0;
-		int withSug = 0;
-
-		for (Event e : events) {
-			if (e.getChar() == ' ')
-				continue;
-			if (e.hasSuggestions())
-				withSug++;
-			if (e.usedSuggestion())
-				used++;
-			if (e.getSentence() != sentence) {
-				sentence = e.getSentence();
-				if (withSug == 0) {
-					ss.addValue(0);
-				} else {
-					ss.addValue((used) / ((double) withSug + 1));
+				if (e.getSentence() != sentence) {
+					sentence = e.getSentence();
+					if (withSug == 0) {
+						ss.addValue(0);
+					} else {
+						ss.addValue((used) / ((double) withSug + 1));
+					}
+					used = 0;
+					withSug = 0;
 				}
-				used = 0;
-				withSug = 0;
 			}
-		}
 
-		out.append("## ASGPorFrase | ");
-		out.append(ss.getMean());
-		out.append(" |  ");
-		out.append(ss.getMean() * td.inverseCumulativeProbability(0.975D)
-				* ss.getStandardDeviation() / Math.sqrt(sentence - 1));
-		out.append("\n");
+			out.write("## ASGPorFrase | ");
+			out.write(((Double) ss.getMean()).toString());
+			out.write(" |  ");
+			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+					* ss.getStandardDeviation() / Math.sqrt(sentence - 1))).toString());
+			out.write("\n");
 
-		out.append("#C# |all| ");
-		for (int i = 0; i < coverages.size(); i++) {
-			out.append(((double) coverages.get(i)) / ((double) numsuggestions.get(i)) + " ");
-		}
-		out.append("\n");
-		for (int j = 0; j < coveragesByLength.get(0).size(); j++) {
-			out.append("#C# |" + j + "| ");
-			for (int i = 0; i < coveragesByLength.size(); i++) {
-				out.append(((double) coveragesByLength.get(i).get(j))
-						/ ((double) numSuggestionsByLength.get(i).get(j)) + " ");
+			out.write("#C# |all| ");
+			for (int i = 0; i < coverages.size(); i++) {
+				out.write(((double) coverages.get(i)) / ((double) numsuggestions.get(i)) + " ");
 			}
-			out.append("\n");
-		}
-		out.append("\n");
+			out.write("\n");
+			for (int j = 0; j < coveragesByLength.get(0).size(); j++) {
+				out.write("#C# |" + j + "| ");
+				for (int i = 0; i < coveragesByLength.size(); i++) {
+					out.write(((double) coveragesByLength.get(i).get(j))
+							/ ((double) numSuggestionsByLength.get(i).get(j)) + " ");
+				}
+				out.write("\n");
+			}
+			out.write("\n");
 
-		ss.clear();
-		out.append("### - \t");
-		for (int i = 0; i < maxTargetSelected; i++) {
-			out.append(i + "\t");
-		}
+			ss.clear();
+			out.write("### - \t");
+			for (int i = 0; i < maxTargetSelected; i++) {
+				out.write(i + "\t");
+			}
 
-		out.append("\n");
-		ArrayList<Integer> spairs = new ArrayList<Integer>(), tpairs = new ArrayList<Integer>();
-		SimpleRegression sr = new SimpleRegression();
+			out.write("\n");
+			ArrayList<Integer> spairs = new ArrayList<Integer>(), tpairs = new ArrayList<Integer>();
+			SimpleRegression sr = new SimpleRegression();
 
-		StringBuilder pairs = new StringBuilder();
-		HashMap<Integer, Integer> row;
-		for (int i = 0; i < maxSourceSelected; i++) {
-			out.append("### " + i + "\t");
-			if (sourceTargetCorrespondenceSelected.containsKey(i)) {
-				row = sourceTargetCorrespondenceSelected.get(i);
-				for (int j = 0; j < maxTargetSelected; j++) {
-					if (row.containsKey(j)) {
-						out.append(row.get(j) + "\t");
-						for (int k = 0; k < row.get(j); k++) {
-							spairs.add(i);
-							tpairs.add(j);
-							sr.addData(i, j);
-							pairs.append("#P# " + i + " " + j + "\n");
+			StringBuilder pairs = new StringBuilder();
+			HashMap<Integer, Integer> row;
+			for (int i = 0; i < maxSourceSelected; i++) {
+				out.write("### " + i + "\t");
+				if (sourceTargetCorrespondenceSelected.containsKey(i)) {
+					row = sourceTargetCorrespondenceSelected.get(i);
+					for (int j = 0; j < maxTargetSelected; j++) {
+						if (row.containsKey(j)) {
+							out.write(row.get(j) + "\t");
+							for (int k = 0; k < row.get(j); k++) {
+								spairs.add(i);
+								tpairs.add(j);
+								sr.addData(i, j);
+								pairs.append("#P# " + i + " " + j + "\n");
+							}
+						} else {
+							out.write("-\t");
 						}
-					} else {
-						out.append("-\t");
+					}
+				} else {
+					for (int j = 0; j < maxTargetSelected; j++) {
+						out.write("-\t");
 					}
 				}
-			} else {
-				for (int j = 0; j < maxTargetSelected; j++) {
-					out.append("-\t");
-				}
+				out.write("\n");
 			}
-			out.append("\n");
-		}
 
-		out.append(pairs.toString());
+			out.write(pairs.toString());
 
-		out.append("\n## Regresión posición origen/destino | " + sr.getIntercept() + " | "
-				+ sr.getInterceptStdErr() + "|" + sr.getSlope() + " | " + sr.getSlopeStdErr());
+			out.write("\n## Regresión posición origen/destino | " + sr.getIntercept() + " | "
+					+ sr.getInterceptStdErr() + "|" + sr.getSlope() + " | " + sr.getSlopeStdErr());
 
-		out.append("\n## Correlación posición origen/destino | "
-				+ getPearsonCorrelation(spairs, tpairs) + "\n\n");
+			out.write("\n## Correlación posición origen/destino | "
+					+ getPearsonCorrelation(spairs, tpairs) + "\n\n");
 
-		out.append("#### - \t");
-		for (int i = 0; i < maxPosition; i++) {
-			out.append(i + "\t");
-		}
+			out.write("#### - \t");
+			for (int i = 0; i < maxPosition; i++) {
+				out.write(i + "\t");
+			}
 
-		out.append("\n");
+			out.write("\n");
 
-		for (char i : allchars) {
-			out.append("#### " + i + "\t");
-			if (sourceTargetCorrespondence.containsKey(i)) {
-				row = sourceTargetCorrespondence.get(i);
-				for (int j = 0; j < maxPosition; j++) {
-					if (row.containsKey(j)) {
-						out.append(row.get(j) + "\t");
-					} else {
-						out.append("-\t");
+			for (char i : allchars) {
+				out.write("#### " + i + "\t");
+				if (sourceTargetCorrespondence.containsKey(i)) {
+					row = sourceTargetCorrespondence.get(i);
+					for (int j = 0; j < maxPosition; j++) {
+						if (row.containsKey(j)) {
+							out.write(row.get(j) + "\t");
+						} else {
+							out.write("-\t");
+						}
+					}
+				} else {
+					for (int j = 0; j < maxPosition; j++) {
+						out.write("-\t");
 					}
 				}
-			} else {
-				for (int j = 0; j < maxPosition; j++) {
-					out.append("-\t");
-				}
+				out.write("\n");
 			}
-			out.append("\n");
-		}
 
-		for (Event e : events) {
-			out.append("#%% " + e.toString() + "\n");
-		}
+			for (Event e : events) {
+				out.write("#%% " + e.toString() + "\n");
+			}
 
-		return out.toString();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 	}
 
 	public static double getPearsonCorrelation(ArrayList<Integer> scores1,
@@ -419,6 +460,10 @@ public class TestOutput {
 		for (int i = 0; i < scores2.size(); i++)
 			sc2[i] = scores2.get(i);
 
-		return pc.correlation(sc1, sc2);
+		try {
+			return pc.correlation(sc1, sc2);
+		} catch (Exception ex) {
+			return 0;
+		}
 	}
 }

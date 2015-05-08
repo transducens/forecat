@@ -67,8 +67,12 @@ public class Event {
 		precision = 0;
 	}
 
-	public void addSuggestion(String id) {
-		sug.add(id);
+	public void addSuggestion(String id, int score) {
+		sug.add(id + ":" + score);
+	}
+
+	public void addSuggestion(String id, double score) {
+		sug.add(id + ":" + score);
 	}
 
 	public void addPotentialSuggestion(String id) {

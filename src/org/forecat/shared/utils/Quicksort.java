@@ -1,18 +1,18 @@
 package org.forecat.shared.utils;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.forecat.shared.suggestions.SuggestionsOutput;
 
 public class Quicksort {
-	ArrayList<Integer> indices;
-	ArrayList<SuggestionsOutput> sug;
+	List<Integer> indices;
+	List<SuggestionsOutput> sug;
 	private int number;
 
 	public Quicksort() {
 	};
 
-	public void sort(ArrayList<Integer> indices, ArrayList<SuggestionsOutput> sug) {
+	public void sort(List<Integer> indices, List<SuggestionsOutput> sug) {
 		// Check for empty or null array
 
 		if (indices.size() == 0)

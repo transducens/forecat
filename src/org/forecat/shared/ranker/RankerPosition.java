@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.forecat.shared.suggestions.SuggestionsOutput;
+import org.forecat.shared.utils.Quicksort;
 
+/**
+ * Chooses the closest suggestions
+ * 
+ * @author Daniel Torregrosa
+ * 
+ */
 public class RankerPosition extends RankerShared {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 185266502718735714L;
 
 	@Override
@@ -22,8 +26,6 @@ public class RankerPosition extends RankerShared {
 			sortList.add(index);
 			so = input.get(index);
 			so.setSuggestionFeasibility(Math.abs(so.getPosition() - rankInp.getPosition()));
-			// System.out.println("+" + so.getSuggestionText() + " " + so.getPosition() + " "
-			// + rankInp.getPosition());
 		}
 		Quicksort q = new Quicksort();
 		q.sort(sortList, input);

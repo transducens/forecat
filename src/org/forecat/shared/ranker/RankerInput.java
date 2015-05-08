@@ -5,10 +5,8 @@ import java.io.Serializable;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 public class RankerInput implements Serializable, IsSerializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = -4156758184297340851L;
 	int position;
 
 	public int getPosition() {
