@@ -77,10 +77,10 @@ public class LanguagesBrowserSide extends LanguagesShared {
 	private void obtainLanguageGoogleAPI(List<LanguagesInput> languagesInput,
 			List<LanguagesOutput> outputList, AsyncCallback<List<LanguagesOutput>> callback) {
 
-		int pos;
+		// int pos;
 
-		if ((pos = LanguagesInput.searchEngine(languagesInput, Engine.GOOGLE.toString())) != -1) {
-			String key = languagesInput.get(pos).getKey();
+		if ((/* pos = */LanguagesInput.searchEngine(languagesInput, Engine.GOOGLE.toString())) != -1) {
+			// String key = languagesInput.get(pos).getKey();
 
 			outputList.add(new LanguagesOutput(Engine.GOOGLE.toString(), "Google Source", "go-sl",
 					"Google Target", "go-tl"));

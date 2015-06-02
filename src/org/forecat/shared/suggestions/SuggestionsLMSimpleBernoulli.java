@@ -64,7 +64,7 @@ public class SuggestionsLMSimpleBernoulli extends SuggestionsShared implements I
 		for (SuggestionsOutput so : output) {
 
 			numberSpaces = 0;
-			logNFact = 0;
+			logNFact = 1;
 			clippedAndSug = clippedTargetText + so.getSuggestionText();
 			for (j = clippedAndSug.length() - 1; j > 0; j--) {
 				if (clippedAndSug.charAt(j) == ' ') {
@@ -73,10 +73,10 @@ public class SuggestionsLMSimpleBernoulli extends SuggestionsShared implements I
 				}
 			}
 
-			so.setSuggestionFeasibility(IRSTLMscorer.getPerplexity(clippedAndSug) + logNFact);
-			// System.out.println(">>>" + clippedTargetText + "- " + so.getSuggestionText() + " : "
-			// + so.getSuggestionFeasibility() + " "
-			// + (so.getSuggestionFeasibility() - logNFact) + " " + logNFact);
+			so.setSuggestionFeasibility(-(IRSTLMscorer.getPerplexity(clippedAndSug) + logNFact));
+			System.out.println(">>>" + clippedTargetText + "- " + so.getSuggestionText() + " : "
+					+ so.getSuggestionFeasibility() + " "
+					+ (-so.getSuggestionFeasibility() - logNFact) + " " + logNFact);
 		}
 		// System.out.println("*");
 

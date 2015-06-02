@@ -25,8 +25,6 @@ public class UtilsConsole {
 	}
 
 	public static Integer multiMax(Integer a, Integer... b) {
-		Integer maxValue = a;
-
 		for (Integer i : b) {
 			a = Math.max(a, i);
 		}

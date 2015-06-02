@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     {
 		double pp;
 		
-		cout <<score(line, pp) <<endl;
+		cout <<scoreAndFuture(line, pp) <<endl;
 	}
 	lineNumber++;
     

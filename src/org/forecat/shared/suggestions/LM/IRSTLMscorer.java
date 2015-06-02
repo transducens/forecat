@@ -9,11 +9,12 @@ import java.io.PrintWriter;
 public class IRSTLMscorer {
 
 	static Process proc;
-	public static String irstlm_scorer = "resources/lm_score/irstlm_prob.cc";
+	public static String irstlm_scorer = "resources/lm_score/irstlm_prob_future";
 	public static String lm_location = "resources/lm_score/lm.txt";
 	public static String vocab_location = "resources/lm_score/vocab";
 	static PrintWriter out;
 	static BufferedReader in;
+	static StreamGobbler err;
 
 	public static void init() {
 		if (proc == null) {
@@ -38,7 +39,7 @@ public class IRSTLMscorer {
 		try {
 			return (Double.parseDouble(in.readLine()));
 		} catch (Exception e) {
-			// e.printStackTrace();
+			e.printStackTrace();
 		}
 		return Double.MAX_VALUE;
 	}

@@ -339,12 +339,6 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 		if (((LanguagesInput.searchEngine(languagesInput, Engine.DICTIONARIUM.toString())) != -1)
 				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
 						Engine.DICTIONARIUM.toString(), sourceCode, targetCode))) {
-			try {
-				InputStream f = Main.class.getResourceAsStream("/dictionarium/" + sourceCode + "-"
-						+ targetCode + ".dict");
-			} catch (Exception ex) {
-				System.err.println(ex.toString());
-			}
 
 			InputStream file = null;
 			InputStream dictionarium = Main.class

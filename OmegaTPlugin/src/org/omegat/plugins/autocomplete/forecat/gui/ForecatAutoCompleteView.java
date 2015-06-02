@@ -6,16 +6,32 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.miniforecat.suggestions.SuggestionsInput;
 import org.miniforecat.suggestions.SuggestionsOutput;
-import org.omegat.gui.editor.autocompleter.AutoCompleter;
 import org.omegat.gui.editor.autocompleter.AutoCompleterItem;
 import org.omegat.gui.editor.autocompleter.AutoCompleterListView;
+import org.omegat.plugins.autocomplete.forecat.ForecatPTS;
 import org.omegat.plugins.autocomplete.forecat.adapter.ForecatMiniInterface;
 
 public class ForecatAutoCompleteView extends AutoCompleterListView {
 
-	public ForecatAutoCompleteView(AutoCompleter completer) {
-		super("Forecat", completer);
+	public ForecatAutoCompleteView() {
+		super("Forecat");
 	}
+	
+	@Override
+    public AutoCompleterItem getSelectedValue()
+	{
+		AutoCompleterItem toRet = super.getSelectedValue();
+		if (toRet != null)
+		{
+			ForecatPTS.useSuggestion(toRet);
+		}
+		return toRet;
+	}
+
+	@Override
+    public boolean shouldCloseOnSelection() {
+        return false;
+    }
 
 	@Override
 	public List<AutoCompleterItem> computeListData(String prevText) {

@@ -57,6 +57,7 @@ public class Main {
 	static int maxEdits = Integer.MAX_VALUE;
 	static boolean useSimpleEditDistance = false;
 	static boolean computeOptimalEditCost = false;
+	public static ArrayList<Integer> lines = null;
 
 	static RankerShared ranker = null;
 	static SuggestionsShared suggestions = null;
@@ -145,18 +146,19 @@ public class Main {
 		while (scannerSource.hasNextLine()) {
 			String source = scannerSource.nextLine();
 			String target = scannerTarget.nextLine();
-
-			System.out.println("---------------------------------------");
-			System.out.println("Source: " + source + "\nTarget: " + target + "\n");
-
 			numsentence++;
-			if (computeOptimalEditCost) {
-				int optimalCost = getOptimalCost(session, source, target, numsentence);
-				System.out.println("#" + numsentence + ":" + optimalCost);
-				costs += optimalCost;
-				lengths += target.length();
-			} else {
-				evaluateOneSentence(session, source, target, numsentence);
+			if (lines == null || lines.contains(numsentence)) {
+				System.out.println("---------------------------------------");
+				System.out.println("Source: " + source + "\nTarget: " + target + "\n");
+
+				if (computeOptimalEditCost) {
+					int optimalCost = getOptimalCost(session, source, target, numsentence);
+					System.out.println("#" + numsentence + ":" + optimalCost);
+					costs += optimalCost;
+					lengths += target.length();
+				} else {
+					evaluateOneSentence(session, source, target, numsentence);
+				}
 			}
 		}
 

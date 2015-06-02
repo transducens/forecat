@@ -1,5 +1,6 @@
 package org.forecat.console;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,6 +33,8 @@ import org.forecat.shared.selection.SelectionPrefixShared;
 import org.forecat.shared.selection.SelectionPrefixSuffixShared;
 import org.forecat.shared.selection.SelectionSuffixShared;
 import org.forecat.shared.suggestions.SuggestionsBasic;
+import org.forecat.shared.suggestions.SuggestionsLM;
+import org.forecat.shared.suggestions.SuggestionsLMBernoulli;
 import org.forecat.shared.suggestions.SuggestionsLMSimpleBernoulli;
 import org.forecat.shared.suggestions.SuggestionsRanker;
 import org.forecat.shared.suggestions.SuggestionsSolr;
@@ -91,6 +94,7 @@ public class OptionsHelper {
 		opt.addOption("lmbinary", true, "Location of the irstlm_scorer binary");
 		opt.addOption("lmfile", true, "Location of the language model in plaintext");
 		opt.addOption("lmvocab", true, "Location of the vocabulary for the language model");
+		opt.addOption("lines", true, "Lines to process");
 		CommandLineParser clp = new GnuParser();
 		CommandLine cl = null;
 		try {
@@ -211,9 +215,15 @@ public class OptionsHelper {
 				String val = cl.getOptionValue("S");
 
 				Main.ranker = OptionsHelper.getRanker(val);
-				if (val.equals("lm")) {
+				if (val.equals("lmd")) {
+					Main.suggestions = new SuggestionsLMBernoulli(Main.suggestions, Main.ranker);
+				}
+				if (val.equals("lms")) {
 					Main.suggestions = new SuggestionsLMSimpleBernoulli(Main.suggestions,
 							Main.ranker);
+				}
+				if (val.equals("lm")) {
+					Main.suggestions = new SuggestionsLM(Main.suggestions, Main.ranker);
 				} else {
 					Main.suggestions = new SuggestionsRanker(Main.suggestions, Main.ranker);
 				}
@@ -223,6 +233,14 @@ public class OptionsHelper {
 			if (cl.hasOption("m")) {
 				Main.max_suggestions = Integer.parseInt(cl.getOptionValue("m"));
 				RankerShared.setMaxSuggestions(Main.max_suggestions);
+			}
+
+			if (cl.hasOption("lines")) {
+				String aux = cl.getOptionValue("lines").toString();
+				Main.lines = new ArrayList<Integer>();
+				for (String s : aux.split(",")) {
+					Main.lines.add(Integer.parseInt(s));
+				}
 			}
 
 			if (cl.hasOption("d")) {
@@ -342,7 +360,7 @@ public class OptionsHelper {
 			rs = new RankerPressureHeuristic();
 			Main.useAlignments = true;
 		}
-		if (val.equals("lm")) {
+		if (val.equals("lm") || val.equals("lmd")) {
 			rs = new RankerScore();
 		}
 		return rs;

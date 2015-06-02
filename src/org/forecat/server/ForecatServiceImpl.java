@@ -50,9 +50,9 @@ public class ForecatServiceImpl extends RemoteServiceServlet implements ForecatS
 	}
 
 	/**
-	 * Returns the current session or null if there is no current one
+	 * Returns the current session or creates one if there is no current one
 	 * 
-	 * @return The current Session or null
+	 * @return The current Session or creates one
 	 */
 	protected SessionServerSide getCurrentSession() {
 		// Access the current session if it exist
@@ -100,9 +100,10 @@ public class ForecatServiceImpl extends RemoteServiceServlet implements ForecatS
 		RankerShared.setMaxSuggestions(4);
 		// HACAT2013
 
-		if (session == null) {
-			throw new ForecatException("session is null");
-		}
+		// Can't happen, getCurrentSession creates a new session if none is available
+		// if (session == null) {
+		// throw new ForecatException("session is null");
+		// }
 		List<SuggestionsOutput> output = su.suggestionsService(input, session);
 		return output;
 	}
@@ -115,10 +116,11 @@ public class ForecatServiceImpl extends RemoteServiceServlet implements ForecatS
 		// HACAT2013
 		sel = new SelectionPositionShared();
 		// HACAT2013
-
-		if (session == null) {
-			throw new ForecatException("session is null");
-		}
+		
+		// Can't happen, getCurrentSession creates a new session if none is available
+		// if (session == null) {
+		// throw new ForecatException("session is null");
+		// }
 		SelectionOutput output = sel.selectionService(input, session);
 		return output;
 	}

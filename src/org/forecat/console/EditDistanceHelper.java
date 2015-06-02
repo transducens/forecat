@@ -29,7 +29,7 @@ public class EditDistanceHelper {
 		if (suffix.equals(suggestion)) {
 			return 0;
 		}
-		int suffixLength = suffix.length(), suggestionLength = suggestion.length();
+		int suggestionLength = suggestion.length();
 		int i = 0, numberSpaces = 0, lastSpace = 0;
 
 		// System.out.println(suffix + "|" + suggestion);
@@ -232,8 +232,9 @@ public class EditDistanceHelper {
 		int[][] d = new int[X][Y];
 		int x = 0, y = 0;
 		int goBackTo = X;
-		List<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>> skipPoints = EditDistanceHelper
-				.getSkipPoints(suffix, suggestion);
+		// List<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>> skipPoints =
+		// EditDistanceHelper
+		// .getSkipPoints(suffix, suggestion);
 
 		while (x < X && y < Y && suffix.charAt(x) == (suggestion.charAt(y))) {
 			d[x][0] = x;
@@ -308,11 +309,11 @@ public class EditDistanceHelper {
 	public static String fitToSuggestionSize(String sufixToType, String s) {
 		int closestSpace = s.length();
 		int searchPlus = 0, searchMinus = 0;
-	
+
 		if (s.length() > sufixToType.length()) {
 			return sufixToType;
 		}
-	
+
 		while (closestSpace + searchPlus < sufixToType.length()
 				&& sufixToType.charAt(closestSpace + searchPlus) != ' ') {
 			searchPlus++;
@@ -321,7 +322,7 @@ public class EditDistanceHelper {
 				&& sufixToType.charAt(closestSpace - searchMinus) != ' ') {
 			searchMinus++;
 		}
-	
+
 		// System.out.println(closestSpace);
 		// System.out.println(searchPlus + ">" + searchMinus);
 		String fittedSufixToType = "";
@@ -345,7 +346,7 @@ public class EditDistanceHelper {
 		} else {
 			fittedSufixToType = "";
 		}
-	
+
 		// System.out.println("--------");
 		// System.out.println(s);
 		// System.out.println(sufixToType);
@@ -357,27 +358,27 @@ public class EditDistanceHelper {
 	public static String fitToSuggestionSizeLeftSpace(String sufixToType, String s) {
 		int closestSpace = s.length();
 		int searchMinus = 0;
-	
+
 		// System.out.println("$" + sufixToType + ">>>" + s);
-	
+
 		if (s.length() >= sufixToType.length()) {
 			return sufixToType;
 		}
-	
+
 		while (closestSpace - searchMinus >= 0 && closestSpace - searchMinus < sufixToType.length()
 				&& sufixToType.charAt(closestSpace - searchMinus) != ' ') {
 			searchMinus++;
 		}
-	
+
 		String fittedSufixToType = "";
-	
+
 		if (closestSpace - searchMinus > 0 && closestSpace - searchMinus < sufixToType.length()
 				&& sufixToType.charAt(closestSpace - searchMinus) == ' ') {
 			fittedSufixToType = sufixToType.substring(0, closestSpace - searchMinus);
 		} else {
 			fittedSufixToType = "";
 		}
-	
+
 		return fittedSufixToType;
 	}
 
