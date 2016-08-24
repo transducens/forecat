@@ -14,8 +14,6 @@ import org.forecat.client.exceptions.ForecatException;
 import org.forecat.console.utils.UtilsConsole;
 import org.forecat.server.languages.LanguagesServerSide;
 import org.forecat.server.translation.TranslationServerSide;
-import org.forecat.server.utils.PropertiesServer;
-import org.forecat.server.utils.PropertiesServer.ApertiumLocations;
 import org.forecat.shared.SessionBrowserSideConsole;
 import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
@@ -58,7 +56,6 @@ public class Main {
 	static boolean useSimpleEditDistance = false;
 	static boolean computeOptimalEditCost = false;
 	public static ArrayList<Integer> lines = null;
-
 	static RankerShared ranker = null;
 	static SuggestionsShared suggestions = null;
 	static SelectionShared selection = null;
@@ -68,6 +65,8 @@ public class Main {
 	static String outFile = "";
 
 	static boolean onlyTrusted = false;
+
+	public static boolean outputAllScores = false;
 
 	/**
 	 * @param args
@@ -83,9 +82,6 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		// Override value in PropertiesServer class:
-		PropertiesServer.apertiumLocation = ApertiumLocations.LOCAL_APERTIUM;
 
 		List<LanguagesInput> inputLanguagesList = new ArrayList<LanguagesInput>();
 		OptionsHelper.manageOptions(args, inputLanguagesList, prop);
@@ -208,6 +204,18 @@ public class Main {
 		String sufixToType = "";
 		int targetLengths[] = new int[targetWords];
 
+		int charactersRead = 0;
+		int charactersAccepted = 0;
+
+		int shortestUsed = 0;
+		int shortestOffered = 0;
+
+		int currentSegmentStart = 0; // Character-level start position of the current prefix
+		int currentCharacter = -1; // Current character
+		int words = -1; // Current word
+		char c;
+		Event event;
+
 		for (int i = 0; i < targetWords; i++) {
 			targetLengths[i] = targetSplit[i].length();
 			decisions[i] = null;
@@ -244,11 +252,10 @@ public class Main {
 
 		for (Entry<String, List<SourceSegment>> entry : segmentPairs.entrySet()) {
 			for (SourceSegment s : entry.getValue()) {
-				TestOutput
-						.addOutput("#% " + s.getId() + "."
-								+ SubIdProvider.getSubId(entry.getKey(), s) + "|" + numsentence
-								+ "|" + s.getPosition() + "|" + s.getCharPosition() + "|"
-								+ entry.getKey() + "\n");
+				TestOutput.addOutput("#% " + s.getId() + "."
+						+ SubIdProvider.getSubId(entry.getKey(), s) + "|" + numsentence + "|"
+						+ s.getPosition() + "|" + s.getCharPosition() + "|" + s.getLength() + "|"
+						+ s.getCharLength() + "|" + entry.getKey() + "\n");
 			}
 		}
 
@@ -260,54 +267,50 @@ public class Main {
 
 		// //////////////////////////////////////////////////
 
-		int shortestUsed = 0;
-		int shortestOffered = 0;
-
 		if (useCoverage) {
 			OptimalCoverage.fillOptimalCoverage(session, target, targetSplit, coverage, sources,
 					previous, offered, bestSuggestionId, decisions, targetLengths, shortestUsed,
 					shortestOffered);
 		}
-		int currentSegmentStart = 0; // Character-level start position of the current prefix
-		int i = -1; // Current character
-		int words = -1; // Current word
-		char c;
-		Event event;
 
-		while (i < target.length()) {
+		while (currentCharacter < target.length()) {
 			keypress++;
-			if (i < 0)
+			if (currentCharacter < 0)
 				c = ' ';
 			else
-				c = target.charAt(i);
-			event = new Event(c, numsentence, i, words);
+				c = target.charAt(currentCharacter);
+			event = new Event(c, numsentence, currentCharacter, words);
 			TestOutput.addEvent(event);
 
 			if (Character.isWhitespace(c)) {
 				words++;
-				currentSegmentStart = i + 1;
-				sufixToType = target.substring(i + 1);
+				currentSegmentStart = currentCharacter + 1;
+				sufixToType = target.substring(currentCharacter + 1);
 				if (!suggestWithNoWord) {
 
-					++i;
+					++currentCharacter;
 					continue;
 				}
 			}
 
 			if (useAlignments) {
 				AlignmentsHelper.computeAlignments(target, sourceWords, targetSplit, segmentPairs,
-						i + 1);
+						currentCharacter + 1);
+				// AlignmentsHelper.computeAlignments(target, sourceWords, targetSplit,
+				// segmentPairs,
+				// currentCharacter + 1, currentSegmentStart == currentCharacter);
 			}
 
 			if (!useCoverage && decisions[words] == null)
 				decisions[words] = "";
 
-			String currentSegment = target.substring(currentSegmentStart, i + 1);
+			String currentSegment = target.substring(currentSegmentStart, currentCharacter + 1);
 			// System.out.println("Current prefix: " + currentSegment);
-			System.out.println(numsentence + ":" + currentSegment + "| " + i + " | " + keypress);
+			System.out.println(numsentence + ":" + currentSegment + "| " + currentCharacter + " | "
+					+ keypress);
 
-			SuggestionsInput inputSuggestions = new SuggestionsInput(target.substring(0,
-					currentSegmentStart), currentSegment, words);
+			SuggestionsInput inputSuggestions = new SuggestionsInput(
+					target.substring(0, currentSegmentStart), currentSegment, words);
 
 			ArrayList<SuggestionsOutput> outputSuggestionsList = null;
 			try {
@@ -338,7 +341,33 @@ public class Main {
 			suggestions_offered += outputSuggestionsList.size();
 			for (SuggestionsOutput s : outputSuggestionsList) {
 				index = index + 1;
-				event.addSuggestion(s.getId(), s.getSuggestionFeasibility());
+
+				if (outputAllScores) {
+
+					String fitted = EditDistanceHelper.fitToSuggestionSize(sufixToType,
+							s.getSuggestionText());
+					String fittedToSpace = EditDistanceHelper
+							.fitToSuggestionSizeLeftSpace(sufixToType, s.getSuggestionText());
+					double sugLength = s.getSuggestionText().length();
+					double simpleEdit = EditDistanceHelper
+							.getSimpleEditDistance(s.getSuggestionText(), sufixToType);
+					double simpleEditFitted = EditDistanceHelper
+							.getSimpleEditDistance(s.getSuggestionText(), fitted);
+					double simpleEditFittedToSpace = EditDistanceHelper
+							.getSimpleEditDistance(s.getSuggestionText(), fittedToSpace);
+
+					event.addSuggestion(s.getId(),
+							"" + s.getSuggestionFeasibility() + ":" + simpleEdit + ":"
+									+ simpleEditFitted + ":" + simpleEditFittedToSpace + ":"
+									+ simpleEdit / sugLength + ":" + simpleEditFitted / sugLength
+									+ ":" + simpleEditFittedToSpace / sugLength
+
+					);
+				} else {
+					event.addSuggestion(s.getId(), "" + s.getSuggestionFeasibility());
+				}
+
+				charactersRead += s.getSuggestionText().length();
 
 				// Pair<Integer, Integer> editDistance = getEditDistance(sufixToType,
 				// s.getSuggestionText());
@@ -379,15 +408,17 @@ public class Main {
 					offered[words]++;
 
 					if ((useEditDistance && editDistance < Integer.MAX_VALUE
-							&& editDistance < fittedSufixToType.length() && editDistance <= maxEdits)
-							|| (s.getSuggestionText().equals(targetSubstring) && (end == target
-									.length() || Character.isWhitespace(target.charAt(end))))) {
+							&& editDistance < fittedSufixToType.length()
+							&& editDistance <= maxEdits)
+							|| (s.getSuggestionText().equals(targetSubstring)
+									&& (end == target.length()
+											|| Character.isWhitespace(target.charAt(end))))) {
 
-						if (match == null
-								|| s.getSuggestionText().length() > match.getSuggestionText()
-										.length()) {
+						if (match == null || s.getSuggestionText().length() > match
+								.getSuggestionText().length()) {
 							if (s.getSuggestionText().split(" ").length > 1
-									|| targetSplit[words].length() - typed.length() >= suggestionSelectPenalty) {
+									|| targetSplit[words].length()
+											- typed.length() >= suggestionSelectPenalty) {
 								match = s;
 								position = index;
 								editDistanceCost = editDistance;
@@ -408,6 +439,8 @@ public class Main {
 				// System.out.println("Suggestions: " + sb2.toString());
 				if (match != null) {
 					// System.out.println("Selected: " + match.getSuggestionText());
+
+					charactersAccepted += match.getSuggestionText().length();
 
 					decisions[words] = match.getId();
 
@@ -434,23 +467,24 @@ public class Main {
 					TestOutput.addMatch(words, match.getPosition());
 
 					if (useEditDistance) {
-						System.out.println("#EEE# " + fittedTarget + " "
-								+ match.getSuggestionText() + " " + editDistanceCost);
+						System.out.println("#EEE# " + fittedTarget + " " + match.getSuggestionText()
+								+ " " + editDistanceCost);
 						keypress += editDistanceCost + 1;
-						i += -currentSegment.length() + 1 + fittedTarget.length();
+						currentCharacter += -currentSegment.length() + 1 + fittedTarget.length();
 						words += fittedTarget.split(" ").length - 1;
 					} else {
 						// Add penalty keypress for choosing a suggestion
 						keypress += suggestionSelectPenalty;
-						i += -currentSegment.length() + 1 + match.getSuggestionText().length();
+						currentCharacter += -currentSegment.length() + 1
+								+ match.getSuggestionText().length();
 						words += match.getSuggestionText().split(" ").length - 1;
 					}
 
-					currentSegmentStart = i;
+					currentSegmentStart = currentCharacter;
 					continue;
 				}
 			}
-			++i;
+			++currentCharacter;
 		}
 
 		System.out.println();
@@ -461,28 +495,32 @@ public class Main {
 		}
 		System.out.println();
 
-		System.out.println("KSR " + i + " " + target.length() + " " + keypress);
+		System.out.println("KSR " + currentCharacter + " " + target.length() + " " + keypress);
 
 		TrustedSegments.addTranslationMemory(target, segmentPairs);
 		TestOutput.addOutput("#TMS# " + TrustedSegments.getSize() + "\n");
+		TestOutput.addCharsAccepted(charactersAccepted);
+		TestOutput.addCharsRead(charactersRead);
 		if (useCoverage) {
 			TestOutput.addSentence(target.length(), coverage[0][targetWords - 1], shortestOffered,
 					shortestUsed);
 		} else {
-			TestOutput
-					.addSentence(target.length(), keypress, suggestions_offered, suggestions_used);
+			TestOutput.addSentence(target.length(), keypress, suggestions_offered,
+					suggestions_used);
 		}
 
 		// smoothPressures(target, numsentence, sourceWords, targetWords);
 
 	}
 
-	public static void manageCaps(ArrayList<SuggestionsOutput> outputSuggestionsList, String typed) {
+	public static void manageCaps(ArrayList<SuggestionsOutput> outputSuggestionsList,
+			String typed) {
 		String newString = "";
 		int atchar = 0;
 		for (SuggestionsOutput sg : outputSuggestionsList) {
 			newString = "";
-			for (atchar = 0; atchar < typed.length() && atchar < sg.getSuggestionText().length(); atchar++) {
+			for (atchar = 0; atchar < typed.length()
+					&& atchar < sg.getSuggestionText().length(); atchar++) {
 				if (Character.isUpperCase(typed.charAt(atchar))) {
 					newString += Character.toUpperCase(sg.getSuggestionText().charAt(atchar));
 				} else {
@@ -496,8 +534,8 @@ public class Main {
 			}
 
 			if (!sg.getSuggestionText().equals(newString))
-				System.out.println("###+" + sg.getSuggestionText() + ">>>" + newString + "|"
-						+ typed);
+				System.out
+						.println("###+" + sg.getSuggestionText() + ">>>" + newString + "|" + typed);
 
 			sg.setSuggestionText(newString);
 		}
@@ -580,8 +618,8 @@ public class Main {
 
 			String currentSegment = target.substring(currentSegmentStart, i + 1);
 
-			SuggestionsInput inputSuggestions = new SuggestionsInput(target.substring(0,
-					currentSegmentStart), currentSegment, words);
+			SuggestionsInput inputSuggestions = new SuggestionsInput(
+					target.substring(0, currentSegmentStart), currentSegment, words);
 
 			ArrayList<SuggestionsOutput> outputSuggestionsList = null;
 			try {
@@ -606,11 +644,11 @@ public class Main {
 				editDistance = EditDistanceHelper.getSimpleEditDistance(s.getSuggestionText(),
 						fittedSufixToType);
 
-				totalCost = costs[i - charsInCurrentSuffix] < 0 ? Integer.MAX_VALUE : editDistance
-						+ suggestionSelectPenalty + costs[i - charsInCurrentSuffix];
+				totalCost = costs[i - charsInCurrentSuffix] < 0 ? Integer.MAX_VALUE
+						: editDistance + suggestionSelectPenalty + costs[i - charsInCurrentSuffix];
 
-				event.addSuggestion(s.getId(), editDistance == Integer.MAX_VALUE ? -1
-						: editDistance);
+				event.addSuggestion(s.getId(),
+						" " + (editDistance == Integer.MAX_VALUE ? 1 : editDistance));
 
 				if (costs[i + fittedSufixToType.length() - charsInCurrentSuffix] > totalCost) {
 					costs[i + fittedSufixToType.length() - charsInCurrentSuffix] = totalCost;

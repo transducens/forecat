@@ -35,20 +35,15 @@ public abstract class TranslationShared implements IsSerializable, Serializable 
 		for (int i = 0; i < wordCount; ++i) {
 			String sourceText = "";
 			String delim = "";
-			for (int j = 0; j < maxSegmentLength; ++j) {
-				if (i + j < words.length) {
-					sourceText += delim + words[i + j];
-					delim = " ";
-					if (j >= (minSegmentLength - 1)) {
-						// System.err.println(sourceText + " " + i + " " + currentId + partialId +
-						// " "
-						// + numchars);
-						sourceSegments.add(new SourceSegment(sourceText, i, false, currentId
-								+ partialId, numchars));
-						partialId++;
-					}
-				} else {
-					break;
+			for (int j = 0; j < maxSegmentLength && i + j < words.length; ++j) {
+				sourceText += delim + words[i + j];
+				delim = " ";
+				if (j >= (minSegmentLength - 1)) {
+					System.err.println(sourceText + " " + i + " " + currentId + partialId + " "
+							+ numchars);
+					sourceSegments.add(new SourceSegment(sourceText, i, false, currentId
+							+ partialId, numchars));
+					partialId++;
 				}
 			}
 			numchars += words[i].length() + 1;

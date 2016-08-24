@@ -30,6 +30,11 @@ public class TestOutput {
 	private static int allSugOk = 0;
 	private static int allSugNok = 0;
 
+	private static int charsRead = 0;
+	private static int charsAccepted = 0;
+	private static ArrayList<Integer> charsReadBySentence = new ArrayList<Integer>();
+	private static ArrayList<Integer> charsAcceptedBySentence = new ArrayList<Integer>();
+
 	private static ArrayList<Double> precs = new ArrayList<Double>();
 	private static ArrayList<Double> recs = new ArrayList<Double>();
 	private static ArrayList<Event> events = new ArrayList<Event>();
@@ -42,6 +47,16 @@ public class TestOutput {
 	private static FileWriter out = null;
 
 	private static ArrayList<Integer> suggestionPosition = new ArrayList<Integer>();
+
+	public static void addCharsRead(int i) {
+		charsRead += i;
+		charsReadBySentence.add(i);
+	}
+
+	public static void addCharsAccepted(int i) {
+		charsAccepted += i;
+		charsAcceptedBySentence.add(i);
+	}
 
 	public static void setOut(FileWriter o) {
 		out = o;
@@ -419,6 +434,40 @@ public class TestOutput {
 			}
 
 			out.write("\n");
+
+			out.write("## Read/accepted ratio ");
+
+			out.write(((Double) (((double) charsAccepted) / charsRead)).toString());
+			out.write("\n");
+
+			out.write("## Read chars ");
+			out.write(((Integer) charsRead).toString());
+			out.write("\n");
+
+			int numSentence = 1;
+
+			for (Integer i : charsReadBySentence) {
+				out.write("## Read chars ");
+				out.write(((Integer) numSentence).toString());
+				out.write(":");
+				out.write(i.toString());
+				out.write("\n");
+				numSentence++;
+			}
+
+			out.write("## Accepted chars ");
+			out.write((((Integer) charsAccepted).toString()));
+			out.write("\n");
+			numSentence = 1;
+
+			for (Integer i : charsAcceptedBySentence) {
+				out.write("## Accepted chars ");
+				out.write(((Integer) numSentence).toString());
+				out.write(":");
+				out.write(i.toString());
+				out.write("\n");
+				numSentence++;
+			}
 
 			for (char i : allchars) {
 				out.write("#### " + i + "\t");

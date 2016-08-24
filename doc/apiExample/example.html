@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title>Black Box Cat API Example</title>
+	<meta http-equiv="content-type" 
+		content="text/html;charset=utf-8" />
+	<meta http-equiv="Access-Control-Allow-Origin" content="*"/>
+
+	<script src="http://www.google.com/jsapi"></script>
+	<script>
+
+	  google.load("jquery", "1");
+	 
+	  google.setOnLoadCallback(function() {
+
+	  });
+	</script>
+	<script type="text/javascript">
+		
+		var baseurl = "http://forecat-970.appspot.com/rest/services/"
+		
+		/**
+			Receives the languages that the engines can translate.
+			For each engine, a pair of engine + key should be added
+			to the request. Also, parameters for setting the way
+			of generating, ranking and managing selected suggestions
+			can be set here.
+		**/
+		function getLanguages()
+		{
+			$.getJSON(baseurl + "languagesService/jsonp?"+
+				"engine=apertium" +
+				"&key=1" +
+				"&callback=?",
+				function(data) {
+					select = document.getElementById("languageSelect")
+					for (i=0; i < data.length; i++)
+					{
+						option = document.createElement("option")
+						option.text = data[i].sourceName + " -> " + data[i].targetName + "(" + data[i].engine + ")"
+						option.value = data[i].sourceCode + "," + data[i].targetCode
+						select.appendChild(option)
+					}
+			})
+		}
+		
+		/**
+			Translates the sentence (sourceText) from the source language
+			(sourceCode) to the target language (targetCode), using 
+			all the subsegments up to some lenght (maxLength).
+			Translated segments are stored server side.
+			The segments are translated using all the engines from
+			the last call that share the same language codes.
+		**/
+		function doTranslate()
+		{
+			sourceText = document.getElementById("sourceText").value
+			select = document.getElementById("languageSelect")
+			codes = select.options[select.selectedIndex].value.split(",")
+			sourceCode = codes[0]
+			targetCode = codes[1]
+
+			$.getJSON(baseurl + "translationService/jsonp?"+
+				"sourceText=" + sourceText + 
+				"&sourceCode=" + sourceCode + 
+				"&targetCode=" + targetCode +
+				"&maxLength=4" +
+				"&callback=?",
+				function(data) {
+					document.getElementById("translateButton").innerHTML = data.numberSegments + " segments available"
+			})
+		}
+		
+		/**
+			Receives the suggestions for the typed text.
+			Url should contain the typed sentence but the last word
+			being typed (targetText) and the current typed prefix
+			(prefixText).
+		**/
+		function getSuggestions()
+		{
+			targetTb = document.getElementById("targetText").value
+			
+			inSpaces = targetTb.split(" ");
+			numwords = inSpaces.length
+			
+			if (inSpaces.length > 1)
+			{
+				targetText = ""
+				for (i=0; i < (inSpaces.length - 1); i++)
+				{
+					targetText += inSpaces[i]
+				}
+				prefixText = inSpaces[i].toLowerCase()
+			}
+			else
+			{
+				targetText = targetTb
+				prefixText = targetTb
+			}
+				
+			$.getJSON(baseurl + "suggestionService/jsonp?"+
+				"targetText=" + targetText + 
+				"&prefixText=" + prefixText +
+				"&position=" + numwords +
+				"&callback=?",
+				function(data) {
+					
+					ul = $("#suggestionsList")
+					ul.empty()
+					ul = document.getElementById("suggestionsList")
+					
+					for (i = 0; i < data.length; i++)
+					{
+						li = document.createElement("li")
+						b = document.createElement("button")
+						b.type = "button"
+						b.innerHTML = data[i].suggestionText
+						b.onclick = (function() {
+						  var text = data[i].suggestionText;
+						  var position = data[i].position
+						  return function() { 
+							  autocomplete(text, position);
+						  }
+						})();
+						
+						li.appendChild(b)
+						ul.appendChild(li)
+					}
+			})
+		}
+		
+		/**
+			Simple function that replaces the last typed word in
+			the textarea with the selected suggestion.
+		**/
+		function autocomplete(text, position)
+		{
+			targetTb = document.getElementById("targetText")
+			
+			inSpaces = targetTb.value.split(" ");
+			
+			if (inSpaces.length > 1)
+			{
+				targetText = ""
+				for (i=0; i < (inSpaces.length - 1); i++)
+				{
+					targetText += inSpaces[i] + " "
+				}
+				targetText += text
+				targetTb.value = targetText
+			}
+			else
+			{
+				targetTb.value = text
+			}
+			
+			ul = $("#suggestionsList")
+			ul.empty()
+				
+			targetTb.focus()
+			doSelection(text, position)
+		}
+		
+		/**
+			Notifies the server that a suggestion has been used, 
+			for managing it in the way that has been set.
+			It uses the selected sugestion text (text) and 
+			the position of the source word that generated
+			this suggestion (position), which is returned
+			in the suggestions service.
+		**/
+		function doSelection(text, position)
+		{
+			$.getJSON(baseurl + "selectionService/jsonp?"+
+				"text=" + text +
+				"&position=" + position +
+				"&callback=?",
+				function(data) {
+			})
+		}
+		
+	</script>
+</head>
+
+<body>
+
+		<div>
+			<button onclick="getLanguages()">Get Languages</button>
+			<select id = "languageSelect"></select>
+		</div>
+		<div>
+			<textarea id = "sourceText" rows="6" cols="40">Put here the text to translate</textarea>
+		</div>
+		<div>
+			<button id="translateButton" onclick="doTranslate()">Translate</button>
+		</div>
+		<div>
+			<textarea id = "targetText" value="" onkeyup="getSuggestions()" rows="6" cols="40"></textarea>
+		</div>
+		<ul id="suggestionsList">
+		
+		</ul>
+</body>
+</html>

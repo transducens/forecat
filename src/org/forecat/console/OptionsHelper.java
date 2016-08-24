@@ -20,6 +20,7 @@ import org.forecat.shared.ranker.RankerLongestShortestFromPosition;
 import org.forecat.shared.ranker.RankerPosition;
 import org.forecat.shared.ranker.RankerPressureBasic;
 import org.forecat.shared.ranker.RankerPressureHeuristic;
+import org.forecat.shared.ranker.RankerPressureNegativeEvidence;
 import org.forecat.shared.ranker.RankerScore;
 import org.forecat.shared.ranker.RankerShared;
 import org.forecat.shared.ranker.RankerShortestFirst;
@@ -69,14 +70,11 @@ public class OptionsHelper {
 		opt.addOption("m", true, "Maximum number of suggestions");
 		opt.addOption("is", true, "Source language input file");
 		opt.addOption("it", true, "Target language input file");
-		opt.addOption("A", false, "Use apertium");
-		opt.addOption("B", false, "Use bing");
-		opt.addOption("U", false, "Use empty translator");
-		// opt.addOption("Google", false, "Use google");
-		opt.addOption("M", true, "Use cachetrans");
-		opt.addOption("D", false, "Use dictionarium");
-		opt.addOption("P", true, "Use phraseum, with freq value.");
-		opt.addOption("S", true, "Sorting method (s|l|sl|ls|lm|sm|sc|pr)");
+		opt.addOption("e", true,
+				"Engines to use [A{pertium},B{ing},C{ache},D{ictionarium},P{hraseum},U{dud}] (more than one is possible)");
+		opt.addOption("M", true, ".ini file for cache translator");
+		opt.addOption("palpha", true, "Phraseum alpha");
+		opt.addOption("S", true, "Sorting method (s|l|sl|ls|lm|sm|sc|pr|ph)");
 		opt.addOption("d", true, "Deleting method (n|p|ip|ps|e)");
 		opt.addOption("T", false, "Use only trusted segments");
 		opt.addOption("ssp", false, "Penalty for selecting a suggestion");
@@ -95,6 +93,7 @@ public class OptionsHelper {
 		opt.addOption("lmfile", true, "Location of the language model in plaintext");
 		opt.addOption("lmvocab", true, "Location of the vocabulary for the language model");
 		opt.addOption("lines", true, "Lines to process");
+		opt.addOption("allScores", false, "Output all scores");
 		CommandLineParser clp = new GnuParser();
 		CommandLine cl = null;
 		try {
@@ -166,49 +165,8 @@ public class OptionsHelper {
 				Main.suggestionSelectPenalty = Integer.parseInt(cl.getOptionValue("ssp"));
 			}
 
-			if (cl.hasOption("A")) {
-				// System.out.println("Using Apertium");
-				LanguagesInput languagesInput = new LanguagesInput(Engine.APERTIUM.toString(),
-						prop.getProperty("apertiumkey", ""));
-				inputLanguagesList.add(languagesInput);
-			}
-
-			if (cl.hasOption("B")) {
-				// System.out.println("Using Bing");
-				LanguagesInput languagesInput = new LanguagesInput(Engine.BING.toString(),
-						prop.getProperty("bingkeyid", "") + ","
-								+ prop.getProperty("bingkeysecret", ""));
-				inputLanguagesList.add(languagesInput);
-			}
-
-			if (cl.hasOption("U")) {
-				// System.out.println("Using Bing");
-				LanguagesInput languagesInput = new LanguagesInput(Engine.DUD.toString(), null);
-				inputLanguagesList.add(languagesInput);
-			}
-
-			if (cl.hasOption("D")) {
-				LanguagesInput languagesInput = new LanguagesInput(Engine.DICTIONARIUM.toString(),
-						"");
-				inputLanguagesList.add(languagesInput);
-			}
-
-			if (cl.hasOption("P")) {
-				LanguagesInput languagesInput = new LanguagesInput(Engine.PHRASEUM.toString(), "");
-				TranslationServerSide.phraseumAlpha = Integer.parseInt(cl.getOptionValue("P"));
-				inputLanguagesList.add(languagesInput);
-			}
-
-			if (cl.hasOption("Google")) {
-				// System.out.println("Using google");
-			}
-
-			if (cl.hasOption("M")) {
-				LanguagesInput languagesInput = new LanguagesInput(Engine.CACHETRANS.toString(), "");
-				String aux = cl.getOptionValue("M");
-				Cachetrans.setConfigFile(aux);
-				Cachetrans.setUseApertium(true);
-				inputLanguagesList.add(languagesInput);
+			if (cl.hasOption("palpha")) {
+				TranslationServerSide.phraseumAlpha = Integer.parseInt(cl.getOptionValue("palpha"));
 			}
 
 			if (cl.hasOption("S")) {
@@ -245,32 +203,7 @@ public class OptionsHelper {
 
 			if (cl.hasOption("d")) {
 				String val = cl.getOptionValue("d");
-
-				if (val.equals("n")) {
-					Main.selection = new SelectionNoneShared();
-				}
-				if (val.equals("p")) {
-					Main.selection = new SelectionPrefixShared();
-				}
-				if (val.equals("ip")) {
-					Main.selection = new SelectionInvPrefixShared();
-				}
-				if (val.equals("s")) {
-					Main.selection = new SelectionSuffixShared();
-				}
-				if (val.equals("ps")) {
-					Main.selection = new SelectionPrefixSuffixShared();
-				}
-				if (val.equals("e")) {
-					Main.selection = new SelectionEqualsShared();
-				}
-				if (val.equals("pos")) {
-					Main.selection = new SelectionPositionShared();
-				}
-				if (val.equals("c")) {
-					Main.selection = new SelectionContainsShared();
-				}
-
+				getSelection(val);
 			}
 
 			if (cl.hasOption("T")) {
@@ -308,6 +241,19 @@ public class OptionsHelper {
 				Main.computeOptimalEditCost = true;
 			}
 
+			if (cl.hasOption("e")) {
+				String val = cl.getOptionValue("e");
+				getTranslationEngine(val, prop, inputLanguagesList);
+			}
+			if (cl.hasOption("M")) {
+				String aux = cl.getOptionValue("M");
+				Cachetrans.setConfigFile(aux);
+			}
+
+			if (cl.hasOption("allScores")) {
+				Main.outputAllScores = true;
+			}
+
 		} catch (Exception ex) {
 			HelpFormatter hf = new HelpFormatter();
 			System.err.println(ex.toString());
@@ -316,6 +262,77 @@ public class OptionsHelper {
 			}
 			hf.printHelp("Console mode of blackboxcat.", opt);
 			System.exit(1);
+		}
+	}
+
+	private static void getSelection(String val) {
+		if (val.equals("n")) {
+			Main.selection = new SelectionNoneShared();
+		}
+		if (val.equals("p")) {
+			Main.selection = new SelectionPrefixShared();
+		}
+		if (val.equals("ip")) {
+			Main.selection = new SelectionInvPrefixShared();
+		}
+		if (val.equals("s")) {
+			Main.selection = new SelectionSuffixShared();
+		}
+		if (val.equals("ps")) {
+			Main.selection = new SelectionPrefixSuffixShared();
+		}
+		if (val.equals("e")) {
+			Main.selection = new SelectionEqualsShared();
+		}
+		if (val.equals("pos")) {
+			Main.selection = new SelectionPositionShared();
+		}
+		if (val.equals("c")) {
+			Main.selection = new SelectionContainsShared();
+		}
+	}
+
+	public static void getTranslationEngine(String val, Properties prop,
+			List<LanguagesInput> inputLanguagesList) {
+
+		for (String s : val.split(",")) {
+			if (s.equals("A") || s.equals("Apertium")) {
+				System.out.println("Using web Apertium");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.APERTIUM.toString(),
+						prop.getProperty("apertiumkey", ""));
+				inputLanguagesList.add(languagesInput);
+			} else if (s.equals("L") || s.equals("LocalApertium")) {
+				System.out.println("Using local Apertium");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.LOCALAPERTIUM.toString(),
+						"No key needed");
+				inputLanguagesList.add(languagesInput);
+			} else if (s.equals("B") || s.equals("Bing")) {
+				System.out.println("Using Bing");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.BING.toString(),
+						prop.getProperty("bingkeyid", "") + ","
+								+ prop.getProperty("bingkeysecret", ""));
+				inputLanguagesList.add(languagesInput);
+			} else if (s.equals("C") || s.equals("Cache")) {
+				System.out.println("Using Cache");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.CACHETRANS.toString(),
+						"No key needed");
+				inputLanguagesList.add(languagesInput);
+			} else if (s.equals("D") || s.equals("Dictionarium")) {
+				System.out.println("Using Dictionarium");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.DICTIONARIUM.toString(),
+						"No key needed");
+				inputLanguagesList.add(languagesInput);
+			} else if (s.equals("P") || s.equals("Phraseum")) {
+				System.out.println("Using Phraseum");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.PHRASEUM.toString(),
+						"No key needed");
+				inputLanguagesList.add(languagesInput);
+			} else if (s.equals("U") || s.equals("Udud")) {
+				System.out.println("Using Dud");
+				LanguagesInput languagesInput = new LanguagesInput(Engine.DUD.toString(),
+						"No key needed");
+				inputLanguagesList.add(languagesInput);
+			}
 		}
 	}
 
@@ -330,37 +347,26 @@ public class OptionsHelper {
 		RankerShared rs = null;
 		if (val.equals("s")) {
 			rs = new RankerShortestFirst();
-		}
-		if (val.equals("l")) {
+		} else if (val.equals("l")) {
 			rs = new RankerLongestFirst();
-		}
-		if (val.equals("sl")) {
+		} else if (val.equals("sl")) {
 			rs = new RankerShortestLongestFirst();
-		}
-		if (val.equals("ls")) {
+		} else if (val.equals("ls")) {
 			rs = new RankerLongestShortestFirst();
-		}
-		if (val.equals("sm")) {
-			// sortingMethod = 6;
-		}
-		if (val.equals("sc")) {
-			// sortingMethod = 7;
-		}
-		if (val.equals("p")) {
+		} else if (val.equals("p")) {
 			rs = new RankerPosition();
-		}
-		if (val.equals("cp")) {
+		} else if (val.equals("cp")) {
 			rs = new RankerComposite(new RankerPosition(), new RankerLongestShortestFromPosition());
-		}
-		if (val.equals("pr")) {
+		} else if (val.equals("pr")) {
 			rs = new RankerPressureBasic();
 			Main.useAlignments = true;
-		}
-		if (val.equals("ph")) {
+		} else if (val.equals("ph")) {
 			rs = new RankerPressureHeuristic();
 			Main.useAlignments = true;
-		}
-		if (val.equals("lm") || val.equals("lmd")) {
+		} else if (val.equals("pn")) {
+			rs = new RankerPressureNegativeEvidence();
+			Main.useAlignments = true;
+		} else if (val.equals("lm") || val.equals("lmd")) {
 			rs = new RankerScore();
 		}
 		return rs;

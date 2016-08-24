@@ -92,6 +92,9 @@ public class ForecatServiceImpl extends RemoteServiceServlet implements ForecatS
 	public List<SuggestionsOutput> suggestionsRPCServer(SuggestionsInput input)
 			throws ForecatException {
 		SessionServerSide session = getCurrentSession();
+		if (session == null) {
+			throw new ForecatException("session is null");
+		}
 		SuggestionsShared su = (SuggestionsShared) session.getAttribute("Suggestions");
 
 		// HACAT2013
@@ -111,12 +114,15 @@ public class ForecatServiceImpl extends RemoteServiceServlet implements ForecatS
 	@Override
 	public SelectionOutput selectionRPCServer(SelectionInput input) throws ForecatException {
 		SessionServerSide session = getCurrentSession();
+		if (session == null) {
+			throw new ForecatException("session is null");
+		}
 		SelectionShared sel = (SelectionShared) session.getAttribute("Selection");
 
 		// HACAT2013
 		sel = new SelectionPositionShared();
 		// HACAT2013
-		
+
 		// Can't happen, getCurrentSession creates a new session if none is available
 		// if (session == null) {
 		// throw new ForecatException("session is null");

@@ -9,12 +9,11 @@ import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.collections4.map.MultiValueMap;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.forecat.client.exceptions.ForecatException;
 import org.forecat.server.translation.cachetrans.Cachetrans;
-import org.forecat.server.utils.PropertiesServer;
 import org.forecat.shared.SessionShared;
 import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
@@ -40,13 +39,10 @@ public class LanguagesServerSide extends LanguagesShared {
 
 		// Call all the engines (order is not important in server-side); these
 		// methods do nothing if the corresponding engine is not in the list.
-		if (PropertiesServer.apertiumLocation == PropertiesServer.ApertiumLocations.NET_APERTIUM) {
-			obtainLanguagesApertiumAPI(outputList, inputList);
-		} else if (PropertiesServer.apertiumLocation == PropertiesServer.ApertiumLocations.LOCAL_APERTIUM) {
-			obtainLanguagesApertiumLocalInstallation(outputList, inputList);
-		}
+		obtainLanguagesApertiumAPY(outputList, inputList);
+		obtainLanguagesApertiumLocalInstallation(outputList, inputList);
 		obtainLanguagesBingAPI(outputList, inputList);
-		obtainLanguagesMesplaTrans(outputList, inputList);
+		obtainLanguagesCacheTrans(outputList, inputList);
 		obtainLanguagesDictionarium(outputList, inputList);
 		obtainLanguagesPhraseum(outputList, inputList);
 		obtainLanguagesDud(outputList, inputList);
@@ -82,7 +78,8 @@ public class LanguagesServerSide extends LanguagesShared {
 		addLanguagePair(outputList, "es", "en", Engine.PHRASEUM.toString());
 	}
 
-	private void obtainLanguagesDud(List<LanguagesOutput> outputList, List<LanguagesInput> inputList) {
+	private void obtainLanguagesDud(List<LanguagesOutput> outputList,
+			List<LanguagesInput> inputList) {
 
 		if ((LanguagesInput.searchEngine(inputList, Engine.DUD.toString())) == -1) {
 			return;
@@ -92,7 +89,7 @@ public class LanguagesServerSide extends LanguagesShared {
 		addLanguagePair(outputList, "es", "en", Engine.DUD.toString());
 	}
 
-	private void obtainLanguagesMesplaTrans(List<LanguagesOutput> outputList,
+	private void obtainLanguagesCacheTrans(List<LanguagesOutput> outputList,
 			List<LanguagesInput> inputList) {
 
 		if ((LanguagesInput.searchEngine(inputList, Engine.CACHETRANS.toString())) == -1) {
@@ -143,6 +140,38 @@ public class LanguagesServerSide extends LanguagesShared {
 		}
 	}
 
+	private void obtainLanguagesApertiumAPY(List<LanguagesOutput> outputList,
+			List<LanguagesInput> inputList) {
+		int pos;
+
+		if ((pos = LanguagesInput.searchEngine(inputList, Engine.APERTIUM.toString())) != -1) {
+			// String key = inputList.get(pos).getKey();
+
+			try {
+				String url = "http://apy.projectjj.com/listPairs";
+				WebResource wr = Client.create().resource(url);
+
+				MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+				// queryParams.add("key", key);
+				wr = wr.queryParams(queryParams);
+				String response = wr.get(String.class);
+
+				ObjectMapper mapper = new ObjectMapper();
+				JsonNode rootNode = mapper.readValue(response, JsonNode.class);
+
+				Iterator<JsonNode> it = rootNode.get("responseData").getElements();
+				while (it.hasNext()) {
+					JsonNode pair = it.next();
+					String sourceCode = pair.get("sourceLanguage").asText();
+					String targetCode = pair.get("targetLanguage").asText();
+					addLanguagePair(outputList, sourceCode, targetCode, Engine.APERTIUM.toString());
+				}
+			} catch (Exception e) {
+				return;
+			}
+		}
+	}
+
 	private void addLanguagePair(List<LanguagesOutput> outputList, String sourceCode,
 			String targetCode, String engine) {
 		// Only add pairs whose both languages are in LanguageShared.languageNames
@@ -150,8 +179,9 @@ public class LanguagesServerSide extends LanguagesShared {
 				&& LanguagesShared.languageNames.containsKey(targetCode)) {
 			String sourceName = LanguagesShared.languageNames.get(sourceCode);
 			String targetName = LanguagesShared.languageNames.get(targetCode);
-			LanguagesOutput output = new LanguagesOutput(engine, sourceName, sourceCode,
-					targetName, targetCode);
+
+			LanguagesOutput output = new LanguagesOutput(engine, sourceName, sourceCode, targetName,
+					targetCode);
 			outputList.add(output);
 		}
 	}
@@ -199,7 +229,7 @@ public class LanguagesServerSide extends LanguagesShared {
 	private void obtainLanguagesApertiumLocalInstallation(List<LanguagesOutput> outputList,
 			List<LanguagesInput> inputList) {
 
-		if ((LanguagesInput.searchEngine(inputList, Engine.APERTIUM.toString())) != -1) {
+		if ((LanguagesInput.searchEngine(inputList, Engine.LOCALAPERTIUM.toString())) != -1) {
 
 			// TODO: get the list of installed pairs in a cleaner way by using Apertium DBus from
 			// Java or a script using it.

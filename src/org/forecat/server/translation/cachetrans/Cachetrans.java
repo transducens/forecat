@@ -9,37 +9,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.collections4.map.MultiValueMap;
 import org.forecat.console.utils.UtilsConsole;
 import org.forecat.shared.translation.SourceSegment;
 
 public class Cachetrans {
 
-	static boolean useGoogle = false;
-	static boolean useApertium = false;
 	static ArrayList<Integer> segmentLengths = new ArrayList<Integer>();
 	static MultiValueMap langs = null;
 	static HashMap<String, HashMap<String, String>> segments = new HashMap<String, HashMap<String, String>>();
 	static String configFile = "cachetrans.txt";
 
-	public static boolean isUseGoogle() {
-		return useGoogle;
-	}
-
 	public static void setConfigFile(String c) {
 		configFile = c;
-	}
-
-	public static void setUseGoogle(boolean useGoogle) {
-		Cachetrans.useGoogle = useGoogle;
-	}
-
-	public static boolean isUseApertium() {
-		return useApertium;
-	}
-
-	public static void setUseApertium(boolean useApertium) {
-		Cachetrans.useApertium = useApertium;
 	}
 
 	public static ArrayList<Integer> getSegmentLengths() {
@@ -54,31 +36,33 @@ public class Cachetrans {
 		if (langs == null) {
 			langs = new MultiValueMap();
 
-			if (useApertium) {
-				langs.put("en", "es");
-				langs.put("es", "en");
-				langs.put("es", "fr");
-				langs.put("fr", "es");
-				langs.put("esc", "ca");
-				langs.put("ca", "esc");
-				langs.put("eu", "es");
-				langs.put("br", "fr");
-				langs.put("cz", "en");
-				langs.put("en", "cz");
-			}
+			langs.put("IN", "OUT");
 
-			if (useGoogle) {
-				langs.put("de", "en");
-				langs.put("en", "de");
-				langs.put("en", "es");
-				langs.put("es", "en");
-				langs.put("en", "fi");
-				langs.put("fi", "en");
-				langs.put("en", "fr");
-				langs.put("fr", "en");
-				langs.put("es", "fr");
-				langs.put("fr", "es");
-			}
+			// if (useApertium) {
+			// langs.put("en", "es");
+			// langs.put("es", "en");
+			// langs.put("es", "fr");
+			// langs.put("fr", "es");
+			// langs.put("esc", "ca");
+			// langs.put("ca", "esc");
+			// langs.put("eu", "es");
+			// langs.put("br", "fr");
+			// langs.put("cz", "en");
+			// langs.put("en", "cz");
+			// }
+			//
+			// if (useGoogle) {
+			// langs.put("de", "en");
+			// langs.put("en", "de");
+			// langs.put("en", "es");
+			// langs.put("es", "en");
+			// langs.put("en", "fi");
+			// langs.put("fi", "en");
+			// langs.put("en", "fr");
+			// langs.put("fr", "en");
+			// langs.put("es", "fr");
+			// langs.put("fr", "es");
+			// }
 		}
 
 		return langs;
@@ -161,12 +145,11 @@ public class Cachetrans {
 		if (!segments.containsKey(lang)) {
 
 			InputStream config = UtilsConsole.openFile(configFile);
-			BufferedReader configReader = new BufferedReader(new InputStreamReader(
-					new DataInputStream(config)));
+			BufferedReader configReader = new BufferedReader(
+					new InputStreamReader(new DataInputStream(config)));
 			String configLine;
 			while ((configLine = configReader.readLine()) != null) {
 				String[] files = configLine.split("\t");
-
 				for (int i = 0; i < files.length; i += 2) {
 					System.out.println(files[i] + " " + files[i + 1]);
 					sSource = UtilsConsole.openFile(files[i]);

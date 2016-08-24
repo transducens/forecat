@@ -64,6 +64,8 @@ public class AlignmentsHelper {
 				int sugSplitLength = sugSplit.length;
 				for (tsug = 0; tsug < sugSplitLength && tsug + twaux < tw; tsug++) {
 					if (!sugSplit[tsug].equals(targetSplit[twaux + tsug])) {
+						// if (print)
+						// System.out.println("NO FIT :" + entry.getKey());
 						break;
 					}
 				}
@@ -71,10 +73,13 @@ public class AlignmentsHelper {
 					// Comprobar si la sugerencia puede encajar al final de lo tecleado
 					if (sugSplit[tsug].startsWith(lastWordPrefix)
 							&& (sugSplitLength + twaux <= targetWords))
+						// if (print)
+						// System.out.println("END FIT :" + entry.getKey());
 						tsug = sugSplitLength;
 				}
 				if (tsug == sugSplitLength) {
-
+					// if (print)
+					// System.out.println("FIT : " + entry.getKey());
 					for (SourceSegment ss : entry.getValue()) {
 						sugSourceSplit = ss.getSourceSegmentText().split(" ");
 						startingSugPos = ss.getPosition();
@@ -85,10 +90,11 @@ public class AlignmentsHelper {
 								.add(new Pair<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, Double>(
 										new Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>(
 												new Pair<Integer, Integer>(startingSugPos, twaux),
-												new Pair<Integer, Integer>(sugSourceSplitLength
-														+ startingSugPos, sugSplitLength + twaux)),
-										(1) / ((double) sugSplitLength * sugSourceSplitLength * entry
-												.getValue().size())));
+												new Pair<Integer, Integer>(
+														sugSourceSplitLength + startingSugPos,
+														sugSplitLength + twaux)),
+										(1) / ((double) sugSplitLength * sugSourceSplitLength
+												* entry.getValue().size())));
 
 						for (int yaux = twaux; yaux < sugSplitLength + twaux; yaux++) {
 							for (int xaux = startingSugPos; xaux < sugSourceSplitLength
@@ -102,6 +108,17 @@ public class AlignmentsHelper {
 				}
 			}
 		}
+
+		// if (print) {
+		// System.out.print("\n#$--- :" + target);
+		// for (int xx = 0; xx < sourceWords; xx++) {
+		// System.out.print("\n#$-- :" + ":\t");
+		// for (int yy = 0; yy < targetWords; yy++) {
+		// System.out.print(String.format("%.2f", presures[xx][yy]) + "\t");
+		// }
+		// }
+		// System.out.println();
+		// }
 
 		RankerPressureBasic.setPressures(presures);
 		RankerPressureBasic.setAlignments(alignments);

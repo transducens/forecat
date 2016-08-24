@@ -19,6 +19,10 @@ public class SourceSegment implements Serializable, IsSerializable {
 	 * Word-level position of the source segment in the input text.
 	 */
 	private int position;
+	/**
+	 * Char position of the suggestion
+	 */
+	private int charPosition;
 
 	/**
 	 * List of engines which have been used to translate this source segment into a particular
@@ -36,11 +40,6 @@ public class SourceSegment implements Serializable, IsSerializable {
 	 * Translation of the source segment
 	 */
 	private String translation;
-
-	/**
-	 * Char position of the suggestion
-	 */
-	private int charPosition;
 
 	// /**
 	// * Method of getting the next id. Linked to session
@@ -140,5 +139,19 @@ public class SourceSegment implements Serializable, IsSerializable {
 	public void setCharPosition(int charPosition) {
 		this.charPosition = charPosition;
 	}
+
+	/**
+	 * Word-level length of the source segment in the input text.
+	 */
+	public int getLength() {
+		return sourceSegmentText.split(" ").length;
+	};
+
+	/**
+	 * Char length of the source segment of the suggestion
+	 */
+	public int getCharLength() {
+		return sourceSegmentText.length();
+	};
 
 }

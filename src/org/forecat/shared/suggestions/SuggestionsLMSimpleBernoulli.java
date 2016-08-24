@@ -23,8 +23,8 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  * @author Daniel Torregrosa
  * 
  */
-public class SuggestionsLMSimpleBernoulli extends SuggestionsShared implements IsSerializable,
-		Serializable {
+public class SuggestionsLMSimpleBernoulli extends SuggestionsShared
+		implements IsSerializable, Serializable {
 
 	SuggestionsShared base;
 	RankerShared ranker;
@@ -74,9 +74,9 @@ public class SuggestionsLMSimpleBernoulli extends SuggestionsShared implements I
 			}
 
 			so.setSuggestionFeasibility(-(IRSTLMscorer.getPerplexity(clippedAndSug) + logNFact));
-			System.out.println(">>>" + clippedTargetText + "- " + so.getSuggestionText() + " : "
-					+ so.getSuggestionFeasibility() + " "
-					+ (-so.getSuggestionFeasibility() - logNFact) + " " + logNFact);
+			// System.out.println(">>>" + clippedTargetText + "- " + so.getSuggestionText() + " : "
+			// + so.getSuggestionFeasibility() + " "
+			// + (-so.getSuggestionFeasibility() - logNFact) + " " + logNFact);
 		}
 		// System.out.println("*");
 

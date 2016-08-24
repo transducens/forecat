@@ -24,7 +24,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.forecat.client.exceptions.ForecatException;
 import org.forecat.console.Main;
 import org.forecat.server.translation.cachetrans.Cachetrans;
-import org.forecat.server.utils.PropertiesServer;
 import org.forecat.shared.SessionShared;
 import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
@@ -41,14 +40,15 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
-public class TranslationServerSide extends TranslationShared implements IsSerializable,
-		Serializable {
+public class TranslationServerSide extends TranslationShared
+		implements IsSerializable, Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6786263404467413690L;
 	public static int phraseumAlpha = 3;
+	public static boolean localApertiumShowUnknown = true;
 
 	public TranslationOutput translationService(TranslationInput input, SessionShared session)
 			throws ForecatException {
@@ -87,16 +87,13 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 
 		session.setAttribute("SuggestionId", sourceSegments.size() + currentId);
 
-		if (PropertiesServer.apertiumLocation == PropertiesServer.ApertiumLocations.NET_APERTIUM) {
-			translateApertiumAPI(sourceSegments, input.getSourceCode(), input.getTargetCode(),
-					segmentPairs, segmentCounts, languagesInput, languagesOutput);
-		} else if (PropertiesServer.apertiumLocation == PropertiesServer.ApertiumLocations.LOCAL_APERTIUM) {
-			translateApertiumLocalInstallation(sourceSegments, input.getSourceCode(),
-					input.getTargetCode(), segmentPairs, segmentCounts, languagesInput,
-					languagesOutput);
-		}
-		translateBingAPI(sourceSegments, input.getSourceCode(), input.getTargetCode(),
+		translateApertiumAPY(sourceSegments, input.getSourceCode(), input.getTargetCode(),
 				segmentPairs, segmentCounts, languagesInput, languagesOutput);
+		translateApertiumLocalInstallation(sourceSegments, input.getSourceCode(),
+				input.getTargetCode(), segmentPairs, segmentCounts, languagesInput,
+				languagesOutput);
+		translateBingAPI(sourceSegments, input.getSourceCode(), input.getTargetCode(), segmentPairs,
+				segmentCounts, languagesInput, languagesOutput);
 		translateCachetrans(sourceSegments, input.getSourceCode(), input.getTargetCode(),
 				segmentPairs, segmentCounts, languagesInput, languagesOutput);
 		translateDictionarium(sourceSegments, input.getSourceCode(), input.getTargetCode(),
@@ -140,8 +137,8 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 				// String response = wr.get(String.class);
 
 				// POST request:
-				String response = wr.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(
-						String.class, queryParams);
+				String response = wr.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+						.post(String.class, queryParams);
 
 				ObjectMapper mapper = new ObjectMapper();
 				JsonNode rootNode = mapper.readValue(response, JsonNode.class);
@@ -158,6 +155,87 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 			} catch (JsonMappingException e) {
 				// TODO: decide whether to throw the Forecat exception or simply return and move to
 				// the next translation service
+				return;
+			} catch (JsonParseException e) {
+				return;
+			} catch (IOException e) {
+				return;
+			}
+		}
+	}
+
+	protected void translateApertiumAPY(List<SourceSegment> sourceSegments, String sourceCode,
+			String targetCode, Map<String, List<SourceSegment>> segmentPairs,
+			Map<String, Integer> segmentCounts, List<LanguagesInput> languagesInput,
+			List<LanguagesOutput> languagesOutput) {
+
+		int pos;
+
+		// Use this engine it if was in Languages input and the engine supports the requested
+		// language pair:
+		if (((pos = LanguagesInput.searchEngine(languagesInput, Engine.APERTIUM.toString())) != -1)
+				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
+						Engine.APERTIUM.toString(), sourceCode, targetCode))) {
+			// String key = languagesInput.get(pos).getKey();
+
+			try {
+				String url = "http://apy.projectjj.com/translate?";
+				WebResource wr = Client.create().resource(url);
+
+				Iterator<SourceSegment> it = sourceSegments.iterator();
+				MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+				queryParams.add("langpair", sourceCode + "|" + targetCode);
+
+				// queryParams.add("key", key);
+
+				String toTranslate = "";
+				int index = 0;
+				while (it.hasNext()) {
+					SourceSegment ss = it.next();
+					toTranslate += "<apertium-notrans>" + index + "</apertium-notrans>"
+							+ ss.getSourceSegmentText() + "<br>";
+					index++;
+				}
+				queryParams.add("q", toTranslate);
+
+				wr = wr.queryParams(queryParams);
+
+				// GET request:
+				// String response = wr.get(String.class);
+
+				// POST request:
+				String response = wr.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+						.post(String.class, queryParams);
+
+				ObjectMapper mapper = new ObjectMapper();
+				JsonNode rootNode = mapper.readValue(response, JsonNode.class);
+
+				// System.out.println(wr.getURI());
+				// System.out.println(response);
+
+				if (rootNode.get("responseStatus").asText().equals("200")) {
+					String[] segments = rootNode.get("responseData").get("translatedText").asText()
+							.split("<br>");
+					for (String s : segments) {
+						if (s.equals("")) {
+							continue;
+						}
+						String[] parts = s.split("</apertium-notrans>");
+						String targetText = parts[1];
+						int position = Integer.parseInt(parts[0].split("<apertium-notrans>")[1]);
+
+						addSegments(segmentPairs, segmentCounts, targetText,
+								Engine.APERTIUM.toString(), sourceSegments.get(position));
+
+						// System.out.println(sourceSegments.get(position).getSourceSegmentText()
+						// + " " + targetText);
+					}
+				}
+
+			} catch (JsonMappingException e) {
+				// TODO: decide whether to throw the Forecat exception or simply return and move to
+				// the next translation service
+				e.printStackTrace();
 				return;
 			} catch (JsonParseException e) {
 				return;
@@ -232,8 +310,6 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 	 * if you go back to GAE (put back GWT SDK just before JRE System Library).
 	 */
 
-	public static boolean showUnknown = true;
-
 	protected void translateApertiumLocalInstallation(List<SourceSegment> sourceSegments,
 			String sourceCode, String targetCode, Map<String, List<SourceSegment>> segmentPairs,
 			Map<String, Integer> segmentCounts, List<LanguagesInput> languagesInput,
@@ -242,14 +318,14 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 		// TODO: check system resources and only translate if system is under a particular
 		// CPU/memory load
 
-		if (((LanguagesInput.searchEngine(languagesInput, Engine.APERTIUM.toString())) != -1)
+		if (((LanguagesInput.searchEngine(languagesInput, Engine.LOCALAPERTIUM.toString())) != -1)
 				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
-						Engine.APERTIUM.toString(), sourceCode, targetCode))) {
+						Engine.LOCALAPERTIUM.toString(), sourceCode, targetCode))) {
 
 			String delimiter = "\n\n\n";
 
 			ProcessBuilder pb = null;
-			if (showUnknown) {
+			if (localApertiumShowUnknown) {
 				pb = new ProcessBuilder("apertium", "-u", sourceCode + "-" + targetCode);
 			} else {
 				pb = new ProcessBuilder("apertium", "", sourceCode + "-" + targetCode);
@@ -293,14 +369,12 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 			for (int i = 0, n = sourceSegments.size(); i < n; ++i) {
 				String targetText = targetSegments[i];
 
-				if (!showUnknown
-						&& (targetText.contains("@") || targetText.contains("#") || targetText
-								.contains("*"))) {
+				if (!localApertiumShowUnknown && (targetText.contains("@")
+						|| targetText.contains("#") || targetText.contains("*"))) {
 
 				} else {
-
-					addSegments(segmentPairs, segmentCounts, targetText,
-							Engine.APERTIUM.toString(), sourceSegments.get(i));
+					addSegments(segmentPairs, segmentCounts, targetText, Engine.APERTIUM.toString(),
+							sourceSegments.get(i));
 				}
 			}
 
@@ -317,8 +391,10 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 		// CPU/memory load
 
 		if (((LanguagesInput.searchEngine(languagesInput, Engine.CACHETRANS.toString())) != -1)
-				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
-						Engine.CACHETRANS.toString(), sourceCode, targetCode))) {
+		/*
+		 * && (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
+		 * Engine.CACHETRANS.toString(), sourceCode, targetCode))
+		 */) {
 
 			List<String> targetSegments = Cachetrans.getTranslation(sourceCode, targetCode,
 					sourceSegments);
@@ -344,8 +420,8 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 			InputStream dictionarium = Main.class
 					.getResourceAsStream("/dictionarium/dictionarium.sh");
 
-			file = Main.class.getResourceAsStream("/dictionarium/" + sourceCode + "-" + targetCode
-					+ ".dict");
+			file = Main.class.getResourceAsStream(
+					"/dictionarium/" + sourceCode + "-" + targetCode + ".dict");
 
 			FileOutputStream destination = null;
 			try {
@@ -416,13 +492,13 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 						Engine.PHRASEUM.toString(), sourceCode, targetCode))) {
 			boolean direction = false;
 			try {
-				InputStream f = Main.class.getResourceAsStream("/phraseum/" + sourceCode + "-"
-						+ targetCode + ".dict");
+				InputStream f = Main.class.getResourceAsStream(
+						"/phraseum/" + sourceCode + "-" + targetCode + ".dict");
 				if (f != null) {
 					direction = true;
 				} else {
-					f = Main.class.getResourceAsStream("/phraseum/" + targetCode + "-" + sourceCode
-							+ ".dict");
+					f = Main.class.getResourceAsStream(
+							"/phraseum/" + targetCode + "-" + sourceCode + ".dict");
 					if (f != null) {
 						direction = false;
 					} else {
@@ -437,11 +513,11 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 			InputStream phraseum = Main.class.getResourceAsStream("/phraseum/phraseum.sh");
 
 			if (direction) {
-				file = Main.class.getResourceAsStream("/phraseum/" + sourceCode + "-" + targetCode
-						+ ".dict");
+				file = Main.class.getResourceAsStream(
+						"/phraseum/" + sourceCode + "-" + targetCode + ".dict");
 			} else {
-				file = Main.class.getResourceAsStream("/phraseum/" + targetCode + "-" + sourceCode
-						+ ".dict");
+				file = Main.class.getResourceAsStream(
+						"/phraseum/" + targetCode + "-" + sourceCode + ".dict");
 			}
 
 			FileOutputStream destination = null;
@@ -460,11 +536,11 @@ public class TranslationServerSide extends TranslationShared implements IsSerial
 			ProcessBuilder pb = null;
 
 			if (direction)
-				pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "2", ""
-						+ phraseumAlpha);
+				pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "2",
+						"" + phraseumAlpha);
 			else
-				pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "1", ""
-						+ phraseumAlpha);
+				pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "1",
+						"" + phraseumAlpha);
 
 			Process proc = null;
 			try {

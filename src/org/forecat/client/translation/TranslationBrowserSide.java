@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.forecat.client.exceptions.ForecatException;
+import org.forecat.client.translation.apertium.ApertiumAPYTranslationJso;
 import org.forecat.client.translation.apertium.ApertiumTranslationJso;
 import org.forecat.shared.SessionShared;
 import org.forecat.shared.languages.LanguagesInput;
@@ -45,7 +46,8 @@ public class TranslationBrowserSide extends TranslationShared implements IsSeria
 		List<LanguagesInput> languagesInput = (List<LanguagesInput>) session
 				.getAttribute("engines");
 		if (languagesInput == null) {
-			throw new ForecatException("engines could not be obtained from session");
+			throw new ForecatException("Engines could not be obtained from session "
+					+ session.getId());
 		}
 
 		@SuppressWarnings("unchecked")
@@ -68,7 +70,7 @@ public class TranslationBrowserSide extends TranslationShared implements IsSeria
 		session.setAttribute("SuggestionId", sourceSegments.size() + currentId);
 
 		// Call the first engine:
-		translateApertiumAPI(sourceSegments, input.getSourceCode(), input.getTargetCode(),
+		translateApertiumAPY(sourceSegments, input.getSourceCode(), input.getTargetCode(),
 				segmentPairs, segmentCounts, languagesInput, languagesOutput, words.length,
 				callback);
 	}
@@ -118,11 +120,122 @@ public class TranslationBrowserSide extends TranslationShared implements IsSeria
 							segmentCounts, languagesInput, languagesOutput, totalSegments, callback);
 				}
 			});
+
 		} else {
 			translateGoogleAPI(sourceSegments, sourceCode, targetCode, segmentPairs, segmentCounts,
 					languagesInput, languagesOutput, totalSegments, callback);
 		}
 	}
+
+	private void translateApertiumAPY(final List<SourceSegment> sourceSegments,
+			final String sourceCode, final String targetCode,
+			final Map<String, List<SourceSegment>> segmentPairs,
+			final Map<String, Integer> segmentCounts, final List<LanguagesInput> languagesInput,
+			final List<LanguagesOutput> languagesOutput, final int totalSegments,
+			final AsyncCallback<TranslationOutput> callback) {
+
+		int pos;
+
+		// Use this engine it if was in Languages input and the engine supports the requested
+		// language pair:
+		if (((pos = LanguagesInput.searchEngine(languagesInput, Engine.APERTIUM.toString())) != -1)
+				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
+						Engine.APERTIUM.toString(), sourceCode, targetCode))) {
+
+			String key = languagesInput.get(pos).getKey();
+			// TODO: createQuery is engine dependent!
+			String queryString = "markUnknown=no&langpair=" + sourceCode + "%7C" + targetCode
+					+ "&q=";
+
+			Iterator<SourceSegment> it = sourceSegments.iterator();
+
+			JsonpRequestBuilder jsonp = new JsonpRequestBuilder();
+
+			// TODO: ensure batch API is being used; the output of the Languages service
+			// must be stored in the session for getting this
+			String url = "http://apy.projectjj.com/translate?" + queryString;
+			int index = 0;
+			while (it.hasNext()) {
+				SourceSegment ss = it.next();
+				url += "<apertium-notrans>" + index + "</apertium-notrans>"
+						+ ss.getSourceSegmentText() + "<br>";
+				index++;
+			}
+			jsonp.requestObject(url, new AsyncCallback<ApertiumAPYTranslationJso>() {
+				@Override
+				public void onFailure(Throwable caught) {
+					callback.onFailure(caught);
+				}
+
+				@Override
+				public void onSuccess(ApertiumAPYTranslationJso result) {
+
+					if (result.getResponseStatus() == 200) {
+						String[] segments = result.getTranslatedText().split("<br>");
+						for (String s : segments) {
+							if (s.equals("")) {
+								continue;
+							}
+							String[] parts = s.split("</apertium-notrans>");
+							String targetText = parts[1];
+							int position = Integer.parseInt(parts[0].split("<apertium-notrans>")[1]);
+
+							addSegments(segmentPairs, segmentCounts, targetText,
+									Engine.APERTIUM.toString(), sourceSegments.get(position));
+
+							System.out.println(sourceSegments.get(position).getSourceSegmentText()
+									+ " " + targetText);
+						}
+					}
+
+					translateGoogleAPI(sourceSegments, sourceCode, targetCode, segmentPairs,
+							segmentCounts, languagesInput, languagesOutput, totalSegments, callback);
+				}
+			});
+
+		} else {
+			translateGoogleAPI(sourceSegments, sourceCode, targetCode, segmentPairs, segmentCounts,
+					languagesInput, languagesOutput, totalSegments, callback);
+		}
+	}
+
+	/*
+	 * private void translateApertiumAPY(final List<SourceSegment> sourceSegments, final String
+	 * sourceCode, final String targetCode, final Map<String, List<SourceSegment>> segmentPairs,
+	 * final Map<String, Integer> segmentCounts, final List<LanguagesInput> languagesInput, final
+	 * List<LanguagesOutput> languagesOutput, final int totalSegments, final
+	 * AsyncCallback<TranslationOutput> callback) {
+	 * 
+	 * int pos;
+	 * 
+	 * // Use this engine it if was in Languages input and the engine supports the requested //
+	 * language pair: if (((pos = LanguagesInput.searchEngine(languagesInput,
+	 * Engine.APERTIUM.toString())) != -1) &&
+	 * (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput, Engine.APERTIUM.toString(),
+	 * sourceCode, targetCode))) {
+	 * 
+	 * String key = languagesInput.get(pos).getKey(); // TODO: createQuery is engine dependent!
+	 * String queryString = "markUnknown=no&langpair=" + sourceCode + "%7C" + targetCode + "&q=";
+	 * 
+	 * Iterator<SourceSegment> it = sourceSegments.iterator();
+	 * 
+	 * JsonpRequestBuilder jsonp = new JsonpRequestBuilder();
+	 * 
+	 * // TODO: ensure batch API is being used; the output of the Languages service // must be
+	 * stored in the session for getting this String url = "http://apy.projectjj.com/translate?" +
+	 * queryString; while (it.hasNext()) { jsonp.requestObject(url +
+	 * it.next().getSourceSegmentText(), new AsyncCallback<ApertiumAPYTranslationJso>() {
+	 * 
+	 * @Override public void onFailure(Throwable caught) { callback.onFailure(caught); }
+	 * 
+	 * @Override public void onSuccess(ApertiumAPYTranslationJso result) { String targetText =
+	 * result.getTranslatedText(); if (result.getResponseStatus() == 200) {
+	 * addSegments(segmentPairs, segmentCounts, targetText, Engine.APERTIUM.toString(),
+	 * sourceSegments.get(0)); }
+	 * 
+	 * } }); } } else { translateGoogleAPI(sourceSegments, sourceCode, targetCode, segmentPairs,
+	 * segmentCounts, languagesInput, languagesOutput, totalSegments, callback); } }
+	 */
 
 	// Each function calls the next one; the final one simply returns
 	private void translateGoogleAPI(final List<SourceSegment> sourceSegments,

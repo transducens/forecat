@@ -2,6 +2,7 @@ package org.forecat.webservices;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -16,11 +17,10 @@ import org.forecat.server.ForecatServiceImpl;
 import org.forecat.server.SessionServerSide;
 import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
-import org.forecat.shared.ranker.RankerLongestFirst;
-import org.forecat.shared.ranker.RankerLongestShortestFirst;
+import org.forecat.shared.ranker.RankerComposite;
+import org.forecat.shared.ranker.RankerLongestShortestFromPosition;
+import org.forecat.shared.ranker.RankerPosition;
 import org.forecat.shared.ranker.RankerShared;
-import org.forecat.shared.ranker.RankerShortestFirst;
-import org.forecat.shared.ranker.RankerShortestLongestFirst;
 import org.forecat.shared.selection.SelectionInput;
 import org.forecat.shared.selection.SelectionOutput;
 import org.forecat.shared.selection.SelectionPositionShared;
@@ -38,7 +38,7 @@ import com.sun.jersey.api.json.JSONWithPadding;
 public class WebServices extends ForecatServiceImpl {
 
 	private static final long serialVersionUID = -8353374761703059680L;
-
+	private static final Logger log = Logger.getLogger(WebServices.class.getName());
 	// / Current HTTP request header
 	private HttpServletRequest currentSesssion;
 
@@ -52,6 +52,7 @@ public class WebServices extends ForecatServiceImpl {
 	protected SessionServerSide createOrGetSession() {
 		SessionServerSide session = new SessionServerSide();
 		session.setSession(currentSesssion.getSession(true));
+		log.warning("Session id " + session.getId());
 		return session;
 	}
 
@@ -64,6 +65,7 @@ public class WebServices extends ForecatServiceImpl {
 	protected SessionServerSide getCurrentSession() {
 		SessionServerSide session = new SessionServerSide();
 		session.setSession(currentSesssion.getSession(false));
+		log.warning("Session id " + session.getId());
 		return session;
 	}
 
@@ -99,6 +101,13 @@ public class WebServices extends ForecatServiceImpl {
 			@QueryParam("selMethod") String selMethod) {
 		currentSesssion = req;
 
+		List<LanguagesOutput> ret = languagesCommon(engines, keys, sugMethod, width, selMethod);
+
+		return ret;
+	}
+
+	private List<LanguagesOutput> languagesCommon(List<String> engines, List<String> keys,
+			String sugMethod, Integer width, String selMethod) {
 		List<LanguagesOutput> ret = null;
 		try {
 			List<LanguagesInput> langInput = new ArrayList<LanguagesInput>();
@@ -108,6 +117,7 @@ public class WebServices extends ForecatServiceImpl {
 			ret = languagesRPCServer(langInput);
 		} catch (ForecatException e) {
 			e.printStackTrace();
+			log.severe(e.toString());
 		}
 
 		SessionServerSide sss = getCurrentSession();
@@ -122,30 +132,31 @@ public class WebServices extends ForecatServiceImpl {
 			sss.setAttribute("Suggestions", new SuggestionsBasic());
 		}
 
-		if (sortMethod != null) {
-			// Should implement RankerBrowserSideI
-			RankerShared rb = null;
-			if (sortMethod.equals("short")) {
-				rb = new RankerShortestFirst();
-			} else if (sortMethod.equals("long")) {
-				rb = new RankerLongestFirst();
-			} else if (sortMethod.equals("shortlong")) {
-				rb = new RankerShortestLongestFirst();
-			} else if (sortMethod.equals("longshort")) {
-				rb = new RankerLongestShortestFirst();
-			} else {
-				rb = new RankerShortestFirst();
-			}
-			if (maxSuggestions != null) {
-				RankerShared.setMaxSuggestions(maxSuggestions);
-			}
-			sss.setAttribute("Ranker", rb);
-		} else {
-			RankerShared rb = null;
-			rb = new RankerLongestShortestFirst();
-			RankerShared.setMaxSuggestions(10);
-			sss.setAttribute("Ranker", rb);
-		}
+		// if (sortMethod != null) {
+		// // Should implement RankerBrowserSideI
+		// RankerShared rb = null;
+		// if (sortMethod.equals("short")) {
+		// rb = new RankerShortestFirst();
+		// } else if (sortMethod.equals("long")) {
+		// rb = new RankerLongestFirst();
+		// } else if (sortMethod.equals("shortlong")) {
+		// rb = new RankerShortestLongestFirst();
+		// } else if (sortMethod.equals("longshort")) {
+		// rb = new RankerLongestShortestFirst();
+		// } else {
+		// rb = new RankerComposite(new RankerPosition(),
+		// new RankerLongestShortestFromPosition());
+		// }
+		// if (maxSuggestions != null) {
+		// RankerShared.setMaxSuggestions(maxSuggestions);
+		// }
+		// sss.setAttribute("Ranker", rb);
+		// } else {
+		RankerShared rb = null;
+		rb = new RankerComposite(new RankerPosition(), new RankerLongestShortestFromPosition());
+		RankerShared.setMaxSuggestions(4);
+		sss.setAttribute("Ranker", rb);
+		// }
 
 		if (selMethod != null) {
 			if (selMethod.equals("position")) {
@@ -156,7 +167,6 @@ public class WebServices extends ForecatServiceImpl {
 		} else {
 			sss.setAttribute("Selection", new SelectionPrefixShared());
 		}
-
 		return ret;
 	}
 
@@ -192,8 +202,8 @@ public class WebServices extends ForecatServiceImpl {
 			@QueryParam("sortMethod") String sortMethod,
 			@QueryParam("maxSuggestions") Integer maxSuggestions,
 			@QueryParam("selMethod") String selMethod, @QueryParam("callback") String callback) {
-		List<LanguagesOutput> ret = languages(req, engines, keys, sugMethod, width, sortMethod,
-				maxSuggestions, selMethod);
+		currentSesssion = req;
+		List<LanguagesOutput> ret = languagesCommon(engines, keys, sugMethod, width, selMethod);
 		return new JSONWithPadding(new GenericEntity<List<LanguagesOutput>>(ret) {
 		}, callback);
 	}
@@ -220,8 +230,15 @@ public class WebServices extends ForecatServiceImpl {
 			@QueryParam("sourceText") String sourceText,
 			@QueryParam("sourceCode") String sourceCode,
 			@QueryParam("targetCode") String targetCode, @QueryParam("maxLength") String maxLength,
-			@QueryParam("maxLength") String minLength) {
+			@QueryParam("minLength") String minLength) {
 		currentSesssion = req;
+		TranslationOutput ret = translationCommon(sourceText, sourceCode, targetCode, maxLength,
+				minLength);
+		return ret;
+	}
+
+	private TranslationOutput translationCommon(String sourceText, String sourceCode,
+			String targetCode, String maxLength, String minLength) {
 		TranslationOutput ret = null;
 		int minlength = 1;
 
@@ -237,6 +254,7 @@ public class WebServices extends ForecatServiceImpl {
 			ret = translationRPCServer(input);
 		} catch (ForecatException e) {
 			e.printStackTrace();
+			log.severe(e.toString());
 		}
 		return ret;
 	}
@@ -265,8 +283,9 @@ public class WebServices extends ForecatServiceImpl {
 			@QueryParam("sourceText") String sourceText,
 			@QueryParam("sourceCode") String sourceCode,
 			@QueryParam("targetCode") String targetCode, @QueryParam("maxLength") String maxLength,
-			@QueryParam("maxLength") String minLength, @QueryParam("callback") String callback) {
-		TranslationOutput ret = translation(req, sourceText, sourceCode, targetCode, maxLength,
+			@QueryParam("minLength") String minLength, @QueryParam("callback") String callback) {
+		currentSesssion = req;
+		TranslationOutput ret = translationCommon(sourceText, sourceCode, targetCode, maxLength,
 				minLength);
 		return new JSONWithPadding(ret, callback);
 	}
@@ -289,8 +308,13 @@ public class WebServices extends ForecatServiceImpl {
 			@QueryParam("targetText") String targetText,
 			@QueryParam("prefixText") String prefixText, @QueryParam("numwords") int numwords) {
 		currentSesssion = req;
+		List<SuggestionsOutput> ret = suggestionsCommon(targetText, prefixText, numwords);
+		return ret;
+	}
+
+	private List<SuggestionsOutput> suggestionsCommon(String targetText, String prefixText,
+			int numwords) {
 		List<SuggestionsOutput> ret = null;
-		// PATCH
 		SuggestionsInput input = new SuggestionsInput(targetText, prefixText, numwords);
 		try {
 			ret = suggestionsRPCServer(input);
@@ -320,7 +344,8 @@ public class WebServices extends ForecatServiceImpl {
 			@QueryParam("targetText") String targetText,
 			@QueryParam("prefixText") String prefixText, @QueryParam("numwords") int numwords,
 			@QueryParam("callback") String callback) {
-		List<SuggestionsOutput> ret = suggestions(req, targetText, prefixText, numwords);
+		currentSesssion = req;
+		List<SuggestionsOutput> ret = suggestionsCommon(targetText, prefixText, numwords);
 		return new JSONWithPadding(new GenericEntity<List<SuggestionsOutput>>(ret) {
 		}, callback);
 	}
@@ -342,6 +367,11 @@ public class WebServices extends ForecatServiceImpl {
 	public SelectionOutput selection(@Context HttpServletRequest req,
 			@QueryParam("text") String text, @QueryParam("position") int position) {
 		currentSesssion = req;
+		SelectionOutput ret = selectionCommon(text, position);
+		return ret;
+	}
+
+	private SelectionOutput selectionCommon(String text, int position) {
 		SelectionOutput ret = null;
 		SelectionInput input = new SelectionInput(text, position);
 		try {
@@ -371,7 +401,8 @@ public class WebServices extends ForecatServiceImpl {
 	public JSONWithPadding selectionJSONP(@Context HttpServletRequest req,
 			@QueryParam("text") String text, @QueryParam("position") int position,
 			@QueryParam("callback") String callback) {
-		SelectionOutput ret = selection(req, text, position);
+		currentSesssion = req;
+		SelectionOutput ret = selectionCommon(text, position);
 		return new JSONWithPadding(new GenericEntity<SelectionOutput>(ret) {
 		}, callback);
 	}

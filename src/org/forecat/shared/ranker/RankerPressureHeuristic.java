@@ -42,16 +42,15 @@ public class RankerPressureHeuristic extends RankerPressureBasic {
 		}
 
 		for (Pair<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, Double> pair : alignments) {
-			Pair<Integer, Integer> originCoord = pair.getKey().getKey();
-			Pair<Integer, Integer> targetCoord = pair.getKey().getValue();
+			Pair<Integer, Integer> topleftCoord = pair.getKey().getKey();
+			Pair<Integer, Integer> bottomrightCoord = pair.getKey().getValue();
 
-			startX = originCoord.getKey();
-			endX = targetCoord.getKey();
-			startY = originCoord.getValue();
-			endY = targetCoord.getValue();
+			startX = topleftCoord.getKey();
+			endX = bottomrightCoord.getKey();
+			startY = topleftCoord.getValue();
+			endY = bottomrightCoord.getValue();
 			weight = pair.getValue();
 
-			// System.out.println(weight + " " + startX + " " + endX + " " + startY + " " + endY);
 			if (rankinp.getPosition() >= startY && rankinp.getPosition() < endY) {
 				for (int x = startX; x < endX && x < pressures.length; x++) {
 					pressureLine[x] += weight * (endY - startY);
@@ -76,7 +75,8 @@ public class RankerPressureHeuristic extends RankerPressureBasic {
 			so = input.get(index);
 			acumPressure = 0.0;
 
-			for (int i = 0; i < so.getNumberWords() && so.getPosition() + i < pressures.length; i++) {
+			for (int i = 0; i < so.getNumberWords()
+					&& so.getPosition() + i < pressures.length; i++) {
 				acumPressure += pressureLine[so.getPosition() + i];
 			}
 

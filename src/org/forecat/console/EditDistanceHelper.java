@@ -227,10 +227,15 @@ public class EditDistanceHelper {
 	 *            Suggestion to manage
 	 * @return
 	 */
-	private static Pair<Integer, Integer> getEditDistance(String suffix, String suggestion) {
+	private static Pair<Integer, Integer> getEditDistanceGoBack(String suffix, String suggestion) {
 		int X = suffix.length(), Y = suggestion.length();
 		int[][] d = new int[X][Y];
 		int x = 0, y = 0;
+
+		/**
+		 * Represents how many characters has the common prefix for the suffix and the suggestion.
+		 * We try to emulate the user behaviour with the cursor at the end of the suggestion
+		 */
 		int goBackTo = X;
 		// List<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>> skipPoints =
 		// EditDistanceHelper
@@ -262,6 +267,47 @@ public class EditDistanceHelper {
 		}
 
 		return new Pair<Integer, Integer>(d[x][Y - 1] + goBackTo, x);
+	}
+
+	/**
+	 * Implementation of the Levenshtein distance algorithm
+	 * 
+	 * @param suffix
+	 *            Suffix of the typed prefix
+	 * @param suggestion
+	 *            Suggestion to manage
+	 * @return
+	 */
+	private static Pair<Integer, Integer> getEditDistance(String suffix, String suggestion) {
+		int X = suffix.length(), Y = suggestion.length();
+		int[][] d = new int[X][Y];
+		int x = 0, y = 0;
+
+		while (x < X && y < Y && suffix.charAt(x) == (suggestion.charAt(y))) {
+			d[x][0] = x;
+			d[0][y] = y;
+			x++;
+			y++;
+		}
+
+		for (; x < X; x++) {
+			d[x][0] = x;
+		}
+		for (; y < Y; y++) {
+			d[0][y] = y;
+		}
+
+		for (x = 1; x < X; x++) {
+			for (y = 1; y < Y; y++) {
+				if (suffix.charAt(x - 1) == (suggestion.charAt(y - 1))) {
+					d[x][y] = d[x - 1][y - 1] + 1;
+				} else {
+					d[x][y] = Math.min(d[x - 1][y], d[x][y - 1]) + 1;
+				}
+			}
+		}
+
+		return new Pair<Integer, Integer>(d[x][Y - 1], x);
 	}
 
 	/**

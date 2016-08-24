@@ -19,9 +19,9 @@ var bingApiKeySecret= getCookie("bingkeysecret") || "";
 var googleApiKey= getCookie("googlekey") || "";
 
 // Input list for the Languages service:
-var inputLanguagesService= [{engine:"apertium", key:apertiumApiKey},
-                            {engine:"bing", key:bingApiKeyId+","+bingApiKeySecret},
-                            {engine:"google", key:googleApiKey}];
+var inputLanguagesService= [{engine:"apertium", key:apertiumApiKey}   ]; //,
+                            //{engine:"bing", key:bingApiKeyId+","+bingApiKeySecret},
+                            //{engine:"google", key:googleApiKey}];
 // var inputLanguagesService= [{engine:"apertium", key:apertiumApiKey}];
 
 var maxSegmentLength;  // Length of longest suggestion
@@ -188,7 +188,7 @@ function translationService (sourceText) {
 	
 	translationInterfaceInitInput();
 	
-	var input= {sourceText:sourceText,sourceCode:sourceCode,targetCode:targetCode,maxSegmentLength:maxSegmentLength};
+	var input= {sourceText:sourceText,sourceCode:sourceCode,targetCode:targetCode,maxSegmentLength:maxSegmentLength,minSegmentLength:1};
 	if (CONSOLE_LOG) {
 		console.log("Request to Translation service: ",input);
 	}
@@ -278,7 +278,7 @@ function suggestionsService(term,responseFunction) {
 	wordLevelStart= words.length;
 	
 	// TODO: decide whether to send the whole current translation (or send the total string length instead)
-	var inputSuggestionsService= {targetText:term,prefixStart:wordLevelStart,prefixText:prefix};
+	var inputSuggestionsService= {targetText:term,position:wordLevelStart,prefixText:prefix};
 	currentRequestId++;
 
 	if (CONSOLE_LOG) {
