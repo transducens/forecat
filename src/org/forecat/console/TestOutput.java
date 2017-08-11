@@ -37,7 +37,6 @@ public class TestOutput {
 
 	private static ArrayList<Double> precs = new ArrayList<Double>();
 	private static ArrayList<Double> recs = new ArrayList<Double>();
-	private static ArrayList<Event> events = new ArrayList<Event>();
 
 	private static ArrayList<Integer> coverages = new ArrayList<Integer>();
 	private static ArrayList<Integer> numsuggestions = new ArrayList<Integer>();
@@ -47,6 +46,10 @@ public class TestOutput {
 	private static FileWriter out = null;
 
 	private static ArrayList<Integer> suggestionPosition = new ArrayList<Integer>();
+	private static ArrayList<Event> events = new ArrayList<Event>();
+
+	private static int shownPopupsForASR = 0;
+	private static int usedSuggestionsForASR = 0;
 
 	public static void addCharsRead(int i) {
 		charsRead += i;
@@ -183,8 +186,8 @@ public class TestOutput {
 			out.write("## Correlacion 1:2 -> ");
 			out.write(((Double) getPearsonCorrelation(sentence_length, keyPress)).toString());
 			out.write("\n## Correlacion 1:4 -> ");
-			out.write(((Double) getPearsonCorrelation(sentence_length, suggestions_used))
-					.toString());
+			out.write(
+					((Double) getPearsonCorrelation(sentence_length, suggestions_used)).toString());
 			out.write("\n");
 
 			SummaryStatistics ss = new SummaryStatistics();
@@ -230,7 +233,7 @@ public class TestOutput {
 			out.write(" |  ");
 			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
 					* ss.getStandardDeviation() / Math.sqrt(suggestions_offered.size())))
-					.toString());
+							.toString());
 			out.write("\n");
 
 			ss.clear();
@@ -276,22 +279,11 @@ public class TestOutput {
 
 				out.write(((Double) (((double) totalUsed) / ((double) totalOffered))).toString());
 				out.write("\n");
+
 			}
 
-			{
-				int withSug = 0;
-				int used = 0;
-				for (Event e : events) {
-					if (e.getChar() == ' ')
-						continue;
-					if (e.hasSuggestions())
-						withSug++;
-					if (e.usedSuggestion())
-						used++;
-				}
-				out.write("## ASG | ");
-				out.write(((double) used / (double) withSug) + "\n");
-			}
+			out.write("## ASR | ");
+			out.write(((double) usedSuggestionsForASR / (double) shownPopupsForASR) + "\n");
 
 			ss.clear();
 			for (int i = 0; i < precs.size(); i++) {
@@ -337,36 +329,34 @@ public class TestOutput {
 			out.write("## Cobertura2 | ");
 			out.write(recall + "\n");
 
-			ss.clear();
-			int sentence = 1;
-			int used = 0;
-			int withSug = 0;
-
-			for (Event e : events) {
-				if (e.getChar() == ' ')
-					continue;
-				if (e.hasSuggestions())
-					withSug++;
-				if (e.usedSuggestion())
-					used++;
-				if (e.getSentence() != sentence) {
-					sentence = e.getSentence();
-					if (withSug == 0) {
-						ss.addValue(0);
-					} else {
-						ss.addValue((used) / ((double) withSug + 1));
-					}
-					used = 0;
-					withSug = 0;
-				}
-			}
-
-			out.write("## ASGPorFrase | ");
-			out.write(((Double) ss.getMean()).toString());
-			out.write(" |  ");
-			out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
-					* ss.getStandardDeviation() / Math.sqrt(sentence - 1))).toString());
-			out.write("\n");
+			// ss.clear();
+			// int sentence = 1;
+			// int used = 0;
+			// int withSug = 0;
+			//
+			// for (Event e : events) {
+			// if (e.hasSuggestions())
+			// withSug++;
+			// if (e.usedSuggestion())
+			// used++;
+			// if (e.getSentence() != sentence) {
+			// sentence = e.getSentence();
+			// if (withSug == 0) {
+			// ss.addValue(0);
+			// } else {
+			// ss.addValue((used) / ((double) withSug + 1));
+			// }
+			// used = 0;
+			// withSug = 0;
+			// }
+			// }
+			//
+			// out.write("## ASGPorFrase | ");
+			// out.write(((Double) ss.getMean()).toString());
+			// out.write(" | ");
+			// out.write(((Double) (ss.getMean() * td.inverseCumulativeProbability(0.975D)
+			// * ss.getStandardDeviation() / Math.sqrt(sentence - 1))).toString());
+			// out.write("\n");
 
 			out.write("#C# |all| ");
 			for (int i = 0; i < coverages.size(); i++) {
@@ -488,9 +478,7 @@ public class TestOutput {
 				out.write("\n");
 			}
 
-			for (Event e : events) {
-				out.write("#%% " + e.toString() + "\n");
-			}
+			Event.wrapUp();
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -514,5 +502,73 @@ public class TestOutput {
 		} catch (Exception ex) {
 			return 0;
 		}
+	}
+
+	public static void flush() {
+		for (Event event : events) {
+			if ((Main.featuresFileWinning != null || Main.featuresFileViable != null)
+					&& event.rankinp != null) {
+				eventToWeka(event);
+			}
+			if (event.hasSuggestions()) {
+				shownPopupsForASR++;
+			}
+			if (event.usedSuggestion()) {
+				usedSuggestionsForASR++;
+			}
+			try {
+				out.write("#%% " + event.toString() + "\n");
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		}
+		events.clear();
+	}
+
+	// public static void featuresHeader() {
+	// try {
+	// Main.feauresFile.write(
+	// "@attribute cNumber numeric\n@attribute wNumber numeric\n@attribute normCNumber
+	// numeric\n@attribute normWNumber numeric\n@attribute oCNumber numeric\n@attribute owNumber
+	// numeric\n@attribute normOrigCNumber numeric\n@attribute normOrigwNumber numeric\n@attribute
+	// sugLengthC numeric\n@attribute sugLengthW numeric\n@attribute origWordLengthC
+	// numeric\n@attribute origWordLengthW numeric\n@attribute charDiff numeric\n@attribute wordDiff
+	// numeric\n@attribute charRatioDiff numeric\n@attribute wordRatioDiff numeric\n@attribute
+	// charRatio numeric\n@attribute wordRatio numeric\n@attribute pr numeric\n@attribute pn
+	// numeric\n@attribute first_letter=a numeric\n@attribute first_letter=b numeric\n@attribute
+	// first_letter=c numeric\n@attribute first_letter=d numeric\n@attribute first_letter=e
+	// numeric\n@attribute first_letter=f numeric\n@attribute first_letter=g numeric\n@attribute
+	// first_letter=h numeric\n@attribute first_letter=i numeric\n@attribute first_letter=j
+	// numeric\n@attribute first_letter=k numeric\n@attribute first_letter=l numeric\n@attribute
+	// first_letter=m numeric\n@attribute first_letter=n numeric\n@attribute first_letter=o
+	// numeric\n@attribute first_letter=p numeric\n@attribute first_letter=q numeric\n@attribute
+	// first_letter=r numeric\n@attribute first_letter=s numeric\n@attribute first_letter=t
+	// numeric\n@attribute first_letter=u numeric\n@attribute first_letter=v numeric\n@attribute
+	// first_letter=w numeric\n@attribute first_letter=x numeric\n@attribute first_letter=y
+	// numeric\n@attribute first_letter=z numeric\n@attribute first_letter=other numeric\n@attribute
+	// word_diff_length_class=NL numeric\n@attribute word_diff_length_class=FL numeric\n@attribute
+	// word_diff_length_class=NS numeric\n@attribute word_diff_length_class=FS numeric\n@attribute
+	// char_diff_length_class=NL numeric\n@attribute char_diff_length_class=FL numeric\n@attribute
+	// char_diff_length_class=NS numeric\n@attribute char_diff_length_class=FS numeric\n@attribute
+	// word_ratio_length_class=NL numeric\n@attribute word_ratio_length_class=FL numeric\n@attribute
+	// word_ratio_length_class=NS numeric\n@attribute word_ratio_length_class=FS numeric\n@attribute
+	// char_ratio_length_class=NL numeric\n@attribute char_ratio_length_class=FL numeric\n@attribute
+	// char_ratio_length_class=NS numeric\n@attribute char_ratio_length_class=FS numeric\n@attribute
+	// distribution_diff_C=H numeric\n@attribute distribution_diff_C=D numeric\n@attribute
+	// distribution_diff_C=DD numeric\n@attribute distribution_diff_C=M numeric\n@attribute
+	// distribution_ratio_C=H numeric\n@attribute distribution_ratio_C=D numeric\n@attribute
+	// distribution_ratio_C=DD numeric\n@attribute distribution_ratio_C=M numeric\n@attribute
+	// distribution_diffN numeric\n@attribute distribution_ratioN numeric\n@attribute
+	// fromUsed=FROM_TYPING numeric\n@attribute overlapping=B numeric\n@attribute overlapping=JB
+	// numeric\n@attribute overlapping=O numeric\n@attribute overlapping=JA numeric\n@attribute
+	// overlapping=A numeric");
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// }
+	// }
+
+	public static void eventToWeka(Event event) {
+		event.toWeka();
 	}
 }

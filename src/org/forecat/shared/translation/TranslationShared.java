@@ -39,10 +39,10 @@ public abstract class TranslationShared implements IsSerializable, Serializable 
 				sourceText += delim + words[i + j];
 				delim = " ";
 				if (j >= (minSegmentLength - 1)) {
-					System.err.println(sourceText + " " + i + " " + currentId + partialId + " "
-							+ numchars);
-					sourceSegments.add(new SourceSegment(sourceText, i, false, currentId
-							+ partialId, numchars));
+					// System.err.println(sourceText + " " + i + " " + currentId + partialId + " "
+					// + numchars);
+					sourceSegments.add(new SourceSegment(sourceText, i, false,
+							currentId + partialId, numchars));
 					partialId++;
 				}
 			}
@@ -62,8 +62,8 @@ public abstract class TranslationShared implements IsSerializable, Serializable 
 		if (!targetText.isEmpty()) {
 			addSegment(segmentPairs, segmentCounts, targetText, engine, sourceSegment);
 			String targetTextLowercase = UtilsShared.uncapitalizeFirstLetter(targetText);
-			addSegment(segmentPairs, segmentCounts, targetTextLowercase, engine, new SourceSegment(
-					sourceSegment));
+			addSegment(segmentPairs, segmentCounts, targetTextLowercase, engine,
+					new SourceSegment(sourceSegment));
 		}
 	}
 

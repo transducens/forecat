@@ -5,17 +5,18 @@ import java.io.Serializable;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 @SuppressWarnings("serial")
-public class SuggestionsOutput implements Serializable, Comparable<SuggestionsOutput>,
-		IsSerializable {
+public class SuggestionsOutput
+		implements Serializable, Comparable<SuggestionsOutput>, IsSerializable {
 
 	String suggestionText;
-	// TODO: study if it is convenient to put some fields as ints or doubles
 	double suggestionFeasibility;
+	String originalText;
 
 	/**
 	 * Position of origin of the suggestion (in source language)
 	 */
-	int position;
+	int wordPosition;
+	int charPosition;
 
 	/**
 	 * Number of words of the origin suggestion
@@ -39,13 +40,14 @@ public class SuggestionsOutput implements Serializable, Comparable<SuggestionsOu
 	protected SuggestionsOutput() {
 	}
 
-	public SuggestionsOutput(String suggestionText, double suggestionFeasibility, String id,
-			int position, int numberWords) {
+	public SuggestionsOutput(String suggestionText, String origText, double suggestionFeasibility,
+			String id, int wordPosition, int charPosition) {
 		this.suggestionText = suggestionText;
+		this.originalText = origText;
 		this.suggestionFeasibility = suggestionFeasibility;
 		this.id = id;
-		this.position = position;
-		this.numberWords = numberWords;
+		this.wordPosition = wordPosition;
+		this.charPosition = charPosition;
 	}
 
 	public void setSuggestionText(String suggestionText) {
@@ -68,12 +70,36 @@ public class SuggestionsOutput implements Serializable, Comparable<SuggestionsOu
 		return id;
 	}
 
-	public int getPosition() {
-		return position;
+	public int getWordPosition() {
+		return wordPosition;
 	}
 
-	public int getNumberWords() {
-		return numberWords;
+	public int getCharPosition() {
+		return charPosition;
+	}
+
+	public int getSuggestionWordLength() {
+		if ("".equals(suggestionText))
+			return 0;
+		return suggestionText.split(" ").length;
+	}
+
+	public int getSuggestionCharLength() {
+		return suggestionText.length();
+	}
+
+	public String getOriginal() {
+		return originalText;
+	}
+
+	public int getOriginalWordLength() {
+		if ("".equals(originalText))
+			return 0;
+		return originalText.split(" ").length;
+	}
+
+	public int getOriginalCharLength() {
+		return originalText.length();
 	}
 
 	/**

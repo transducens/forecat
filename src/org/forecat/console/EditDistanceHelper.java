@@ -182,8 +182,8 @@ public class EditDistanceHelper {
 		// }
 		// System.out.println("--");
 
-		return d[X - 1][Y - 1].elements.isEmpty() ? Integer.MAX_VALUE : d[X - 1][Y - 1].elements
-				.get(0).cost;
+		return d[X - 1][Y - 1].elements.isEmpty() ? Integer.MAX_VALUE
+				: d[X - 1][Y - 1].elements.get(0).cost;
 	}
 
 	/**
@@ -344,7 +344,8 @@ public class EditDistanceHelper {
 				if (suffixWords[x].equals(suggestionWords[y])) {
 					ret.add(new Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>(
 							new Pair<Integer, Integer>(suffixSpaces[x], suggestionSpaces[y]),
-							new Pair<Integer, Integer>(suffixSpaces[x - 1], suggestionSpaces[y - 1])));
+							new Pair<Integer, Integer>(suffixSpaces[x - 1],
+									suggestionSpaces[y - 1])));
 				}
 			}
 		}
@@ -352,6 +353,13 @@ public class EditDistanceHelper {
 		return ret;
 	}
 
+	/**
+	 * Fits the suggestion length to the closest space
+	 * 
+	 * @param suffix
+	 * @param suggestion
+	 * @return
+	 */
 	public static String fitToSuggestionSize(String sufixToType, String s) {
 		int closestSpace = s.length();
 		int searchPlus = 0, searchMinus = 0;
@@ -373,8 +381,8 @@ public class EditDistanceHelper {
 		// System.out.println(searchPlus + ">" + searchMinus);
 		String fittedSufixToType = "";
 		if (closestSpace + searchPlus == sufixToType.length()
-				|| (closestSpace + searchPlus < sufixToType.length() && sufixToType
-						.charAt(closestSpace + searchPlus) == ' ')) {
+				|| (closestSpace + searchPlus < sufixToType.length()
+						&& sufixToType.charAt(closestSpace + searchPlus) == ' ')) {
 			if (closestSpace - searchMinus > 0 && closestSpace - searchMinus < sufixToType.length()
 					&& sufixToType.charAt(closestSpace - searchMinus) == ' ') {
 				if (searchPlus < searchMinus) {
@@ -401,6 +409,13 @@ public class EditDistanceHelper {
 		return fittedSufixToType;
 	}
 
+	/**
+	 * Shrinks the suggestion to the closest space
+	 * 
+	 * @param suffix
+	 * @param suggestion
+	 * @return
+	 */
 	public static String fitToSuggestionSizeLeftSpace(String sufixToType, String s) {
 		int closestSpace = s.length();
 		int searchMinus = 0;

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.math3.util.Pair;
 import org.forecat.client.exceptions.ForecatException;
+import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 import org.forecat.shared.utils.Quicksort;
 
@@ -42,8 +43,8 @@ public class RankerPressureBasic extends RankerShared {
 	}
 
 	@Override
-	public List<SuggestionsOutput> rankerService(RankerInput rankinp, List<SuggestionsOutput> input)
-			throws ForecatException {
+	public List<SuggestionsOutput> rankerService(SuggestionsInput rankinp,
+			List<SuggestionsOutput> input) throws ForecatException {
 		ArrayList<SuggestionsOutput> outputSuggestionsList = new ArrayList<SuggestionsOutput>();
 		ArrayList<Integer> sortList = new ArrayList<Integer>();
 		SuggestionsOutput so;
@@ -91,9 +92,9 @@ public class RankerPressureBasic extends RankerShared {
 			so = input.get(index);
 			acumPressure = 0.0;
 
-			for (int i = 0; i < so.getNumberWords()
-					&& so.getPosition() + i < pressures.length; i++) {
-				acumPressure += pressureLine[so.getPosition() + i];
+			for (int i = 0; i < so.getSuggestionWordLength()
+					&& so.getWordPosition() + i < pressures.length; i++) {
+				acumPressure += pressureLine[so.getWordPosition() + i];
 			}
 
 			so.setSuggestionFeasibility(acumPressure);
@@ -108,7 +109,7 @@ public class RankerPressureBasic extends RankerShared {
 		return outputSuggestionsList;
 	}
 
-	public List<SuggestionsOutput> rankerService2(RankerInput rankinp,
+	public List<SuggestionsOutput> rankerService2(SuggestionsInput rankinp,
 			List<SuggestionsOutput> input) throws ForecatException {
 		ArrayList<SuggestionsOutput> outputSuggestionsList = new ArrayList<SuggestionsOutput>();
 		ArrayList<Integer> sortList = new ArrayList<Integer>();
@@ -120,9 +121,9 @@ public class RankerPressureBasic extends RankerShared {
 			so = input.get(index);
 			acumPressure = 0.0;
 
-			for (int i = 0; i < so.getNumberWords()
-					&& so.getPosition() + i < pressures.length; i++) {
-				acumPressure += pressures[so.getPosition() + i][rankinp.getPosition()];
+			for (int i = 0; i < so.getSuggestionWordLength()
+					&& so.getWordPosition() + i < pressures.length; i++) {
+				acumPressure += pressures[so.getWordPosition() + i][rankinp.getPosition()];
 			}
 			so.setSuggestionFeasibility(acumPressure);
 			System.out.println(so.getSuggestionFeasibility() + " " + so.getSuggestionText());

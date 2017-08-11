@@ -1,5 +1,8 @@
 package org.forecat.console;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -73,6 +76,10 @@ public class OptionsHelper {
 		opt.addOption("e", true,
 				"Engines to use [A{pertium},B{ing},C{ache},D{ictionarium},P{hraseum},U{dud}] (more than one is possible)");
 		opt.addOption("M", true, ".ini file for cache translator");
+		opt.addOption("dictionariumbinary", true, "Location of the dictionarium binary");
+		opt.addOption("dictionariumdata", true, "Location of the dictionarium data");
+		opt.addOption("phraseumbinary", true, "Location of the phraseum binary");
+		opt.addOption("phraseumdata", true, "Location of the phraseum data");
 		opt.addOption("palpha", true, "Phraseum alpha");
 		opt.addOption("S", true, "Sorting method (s|l|sl|ls|lm|sm|sc|pr|ph)");
 		opt.addOption("d", true, "Deleting method (n|p|ip|ps|e)");
@@ -80,7 +87,7 @@ public class OptionsHelper {
 		opt.addOption("ssp", false, "Penalty for selecting a suggestion");
 		opt.addOption("c", false, "Use coverage");
 		opt.addOption("z", false, "Give suggestions with nothing typed");
-		opt.addOption("L", true, "Use SOLR suggestions");
+		opt.addOption("L", true, "Show SOLR suggestions");
 		opt.addOption("noSuggestions", false, "Do not use any suggestions");
 		opt.addOption("ed", false, "Use edit distance");
 		opt.addOption("sed", false, "Use simple edit distance");
@@ -92,8 +99,18 @@ public class OptionsHelper {
 		opt.addOption("lmbinary", true, "Location of the irstlm_scorer binary");
 		opt.addOption("lmfile", true, "Location of the language model in plaintext");
 		opt.addOption("lmvocab", true, "Location of the vocabulary for the language model");
+		opt.addOption("lmTimeOut", true,
+				"Timeout for the language model. Set it higher if you are using slow LM models. Probably indicates some buffering problem with the pipes.");
 		opt.addOption("lines", true, "Lines to process");
 		opt.addOption("allScores", false, "Output all scores");
+		opt.addOption("featuresWinning", true,
+				"Output features to a file in Weka arff style; winning features are classified as 1, rest 0");
+		opt.addOption("featuresViable", true,
+				"Output features to a file in Weka arff style; viable features are classified as 1, rest 0");
+		opt.addOption("featuresTempFolder", true,
+				"Temporary folder for storing the features file (2 passes are needed due some aggregate values)");
+		opt.addOption("FANNstyle", false,
+				"Output the features file in FANN style (else, Weka arff style is used)");
 		CommandLineParser clp = new GnuParser();
 		CommandLine cl = null;
 		try {
@@ -115,6 +132,9 @@ public class OptionsHelper {
 			}
 			if (cl.hasOption("lmvocab")) {
 				IRSTLMscorer.vocab_location = cl.getOptionValue("lmvocab");
+			}
+			if (cl.hasOption("lmTimeOut")) {
+				IRSTLMscorer.setTimeOut(Integer.parseInt(cl.getOptionValue("lmTimeOut")));
 			}
 
 			if (cl.hasOption("l")) {
@@ -165,6 +185,22 @@ public class OptionsHelper {
 				Main.suggestionSelectPenalty = Integer.parseInt(cl.getOptionValue("ssp"));
 			}
 
+			if (cl.hasOption("dictionariumbinary")) {
+				TranslationServerSide.dictionariumBin = cl.getOptionValue("dictionariumbinary");
+			}
+
+			if (cl.hasOption("dictionariumdata")) {
+				TranslationServerSide.dictionariumData = cl.getOptionValue("dictionariumdata");
+			}
+
+			if (cl.hasOption("phraseumbinary")) {
+				TranslationServerSide.phraseumBin = cl.getOptionValue("phraseumbinary");
+			}
+
+			if (cl.hasOption("phraseumdata")) {
+				TranslationServerSide.phraseumData = cl.getOptionValue("phraseumdata");
+			}
+
 			if (cl.hasOption("palpha")) {
 				TranslationServerSide.phraseumAlpha = Integer.parseInt(cl.getOptionValue("palpha"));
 			}
@@ -175,12 +211,10 @@ public class OptionsHelper {
 				Main.ranker = OptionsHelper.getRanker(val);
 				if (val.equals("lmd")) {
 					Main.suggestions = new SuggestionsLMBernoulli(Main.suggestions, Main.ranker);
-				}
-				if (val.equals("lms")) {
+				} else if (val.equals("lms")) {
 					Main.suggestions = new SuggestionsLMSimpleBernoulli(Main.suggestions,
 							Main.ranker);
-				}
-				if (val.equals("lm")) {
+				} else if (val.equals("lm")) {
 					Main.suggestions = new SuggestionsLM(Main.suggestions, Main.ranker);
 				} else {
 					Main.suggestions = new SuggestionsRanker(Main.suggestions, Main.ranker);
@@ -252,6 +286,44 @@ public class OptionsHelper {
 
 			if (cl.hasOption("allScores")) {
 				Main.outputAllScores = true;
+			}
+
+			if (cl.hasOption("featuresWinning")) {
+				File f = new File(cl.getOptionValue("featuresWinning"));
+
+				f.delete();
+				try {
+					System.out.println(f.getCanonicalPath());
+					f.createNewFile();
+					Main.featuresFileWinning = new FileWriter(f);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if (cl.hasOption("featuresViable")) {
+				File f = new File(cl.getOptionValue("featuresViable"));
+
+				f.delete();
+				try {
+					System.out.println(f.getCanonicalPath());
+					f.createNewFile();
+					Main.featuresFileViable = new FileWriter(f);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			File dir = null;
+			if (cl.hasOption("featuresTempFolder")) {
+				dir = new File(cl.getOptionValue("featuresTempFolder"));
+			}
+
+			Main.featuresTempF = File.createTempFile("forecat.", ".tmp", dir);
+			Main.featuresTempFile = new FileWriter(Main.featuresTempF);
+
+			if (cl.hasOption("FANNstyle")) {
+				Main.useFannStyle = true;
 			}
 
 		} catch (Exception ex) {

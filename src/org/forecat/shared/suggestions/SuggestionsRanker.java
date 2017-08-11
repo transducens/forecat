@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.forecat.client.exceptions.ForecatException;
-import org.forecat.shared.ranker.RankerInput;
 import org.forecat.shared.ranker.RankerShared;
 import org.forecat.shared.translation.SourceSegment;
 
@@ -24,10 +23,9 @@ public class SuggestionsRanker extends SuggestionsShared implements IsSerializab
 	@Override
 	public List<SuggestionsOutput> obtainSuggestions(SuggestionsInput input,
 			Map<String, List<SourceSegment>> segmentPairs, Map<String, Integer> segmentCounts) {
-		RankerInput rankerInput = new RankerInput(input.getPosition());
 		List<SuggestionsOutput> output = base.obtainSuggestions(input, segmentPairs, segmentCounts);
 		try {
-			output = ranker.rankerService(rankerInput, output);
+			output = ranker.rankerService(input, output);
 		} catch (ForecatException e) {
 			e.printStackTrace();
 		}

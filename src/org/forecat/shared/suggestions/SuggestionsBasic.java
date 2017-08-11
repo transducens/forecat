@@ -28,31 +28,47 @@ public class SuggestionsBasic extends SuggestionsShared implements IsSerializabl
 
 		// SuggestionsOutput includes a compareTo method.
 		SortedSet<SuggestionsOutput> preoutput = new TreeSet<SuggestionsOutput>();
+		int closerPositionWords, closerDifference, closerPositionChars, i;
 
 		Iterator<Entry<String, List<SourceSegment>>> it = segmentPairs.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<String, List<SourceSegment>> e = it.next();
 
 			// Search for the closest source segment that could have generated this suggestion
-			int closerPosition = -1;
-			int closerDifference = 0;
+			closerPositionWords = -1;
+			closerDifference = 0;
+			closerPositionChars = 0;
+			String originText = "";
 			String closerId = "";
 			for (SourceSegment ss : segmentPairs.get(e.getKey())) {
-				if (closerPosition == -1) {
-					closerPosition = ss.getPosition();
-					closerDifference = Math.abs(ss.getPosition() - input.getPrefixStart());
+				if (closerPositionWords == -1) {
+					closerPositionWords = ss.getPosition();
+					closerDifference = Math.abs(ss.getPosition() - input.getPosition());
 					closerId = ss.getId() + "." + SubIdProvider.getSubId(e.getKey(), ss);
-				} else if (Math.abs(ss.getPosition() - input.getPrefixStart()) < closerDifference) {
-					closerPosition = ss.getPosition();
-					closerDifference = Math.abs(ss.getPosition() - input.getPrefixStart());
+					originText = ss.getSourceSegmentText();
+				} else if (Math.abs(ss.getPosition() - input.getPosition()) < closerDifference) {
+					closerPositionWords = ss.getPosition();
+					closerDifference = Math.abs(ss.getPosition() - input.getPosition());
 					closerId = ss.getId() + "." + SubIdProvider.getSubId(e.getKey(), ss);
+					originText = ss.getSourceSegmentText();
 				}
 			}
-			if (UtilsShared.isPrefix(input.getPrefixText(), e.getKey())
+
+			i = 0;
+			for (String s : input.getSourceText().split(" ")) {
+				if (i == closerPositionWords)
+					break;
+				i++;
+				closerPositionChars += s.length() + 1; // Word + a space
+			}
+			if (closerPositionChars > 0)
+				closerPositionChars--; // Discount the last space
+
+			if (UtilsShared.isPrefix(input.getLastWordPrefix(), e.getKey())
 					&& segmentCounts.get(e.getKey()) > 0) {
 				// Simple estimation of feasibility: ratio of lengths
-				preoutput.add(new SuggestionsOutput(e.getKey(), e.getKey().length(), closerId,
-						closerPosition, e.getKey().split(" ").length));
+				preoutput.add(new SuggestionsOutput(e.getKey(), originText, e.getKey().length(),
+						closerId, closerPositionWords, closerPositionChars));
 			}
 		}
 

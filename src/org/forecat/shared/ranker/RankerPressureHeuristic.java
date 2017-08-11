@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.math3.util.Pair;
 import org.forecat.client.exceptions.ForecatException;
+import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 import org.forecat.shared.utils.Quicksort;
 
@@ -26,8 +27,8 @@ public class RankerPressureHeuristic extends RankerPressureBasic {
 	private static final long serialVersionUID = 1882826662861238513L;
 
 	@Override
-	public List<SuggestionsOutput> rankerService(RankerInput rankinp, List<SuggestionsOutput> input)
-			throws ForecatException {
+	public List<SuggestionsOutput> rankerService(SuggestionsInput rankinp,
+			List<SuggestionsOutput> input) throws ForecatException {
 		ArrayList<SuggestionsOutput> outputSuggestionsList = new ArrayList<SuggestionsOutput>();
 		ArrayList<Integer> sortList = new ArrayList<Integer>();
 		SuggestionsOutput so;
@@ -75,9 +76,9 @@ public class RankerPressureHeuristic extends RankerPressureBasic {
 			so = input.get(index);
 			acumPressure = 0.0;
 
-			for (int i = 0; i < so.getNumberWords()
-					&& so.getPosition() + i < pressures.length; i++) {
-				acumPressure += pressureLine[so.getPosition() + i];
+			for (int i = 0; i < so.getSuggestionWordLength()
+					&& so.getWordPosition() + i < pressures.length; i++) {
+				acumPressure += pressureLine[so.getWordPosition() + i];
 			}
 
 			so.setSuggestionFeasibility(acumPressure);

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.forecat.client.exceptions.ForecatException;
+import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 
 /**
@@ -28,21 +29,21 @@ public class RankerLongestShortestFromPosition extends RankerShared {
 	}
 
 	@Override
-	public List<SuggestionsOutput> rankerService(RankerInput rankInp, List<SuggestionsOutput> input)
-			throws ForecatException {
+	public List<SuggestionsOutput> rankerService(SuggestionsInput rankInp,
+			List<SuggestionsOutput> input) throws ForecatException {
 		ArrayList<SuggestionsOutput> outputSuggestionsList = new ArrayList<SuggestionsOutput>();
 		HashMap<Integer, List<SuggestionsOutput>> all = new HashMap<Integer, List<SuggestionsOutput>>();
 		int biggestList = 0;
 
 		for (SuggestionsOutput so : input) {
-			if (all.get(so.getPosition()) == null) {
-				all.put(so.getPosition(), new ArrayList<SuggestionsOutput>());
-				all.get(so.getPosition()).add(so);
+			if (all.get(so.getWordPosition()) == null) {
+				all.put(so.getWordPosition(), new ArrayList<SuggestionsOutput>());
+				all.get(so.getWordPosition()).add(so);
 			} else {
-				all.get(so.getPosition()).add(so);
+				all.get(so.getWordPosition()).add(so);
 			}
-			if (all.get(so.getPosition()).size() > biggestList) {
-				biggestList = all.get(so.getPosition()).size();
+			if (all.get(so.getWordPosition()).size() > biggestList) {
+				biggestList = all.get(so.getWordPosition()).size();
 			}
 		}
 
@@ -53,8 +54,8 @@ public class RankerLongestShortestFromPosition extends RankerShared {
 		ArrayList<Integer> order = new ArrayList<Integer>();
 
 		for (SuggestionsOutput so : input) {
-			if (!order.contains(so.getPosition())) {
-				order.add(so.getPosition());
+			if (!order.contains(so.getWordPosition())) {
+				order.add(so.getWordPosition());
 			}
 		}
 
@@ -72,8 +73,8 @@ public class RankerLongestShortestFromPosition extends RankerShared {
 					if (outputSuggestionsList.size() >= maxSuggestions)
 						break;
 					// Add the iteration-th longest suggestion if it is not already on the result
-					if (!outputSuggestionsList.contains(current.get(current.size()
-							- (1 + iteration)))) {
+					if (!outputSuggestionsList
+							.contains(current.get(current.size() - (1 + iteration)))) {
 						outputSuggestionsList.add(current.get(current.size() - (1 + iteration)));
 					}
 					// Check if we have enough suggestions

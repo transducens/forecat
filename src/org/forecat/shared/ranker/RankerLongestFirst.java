@@ -3,6 +3,7 @@ package org.forecat.shared.ranker;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 import org.forecat.shared.utils.Quicksort;
 
@@ -18,7 +19,7 @@ public class RankerLongestFirst extends RankerShared {
 	private static final long serialVersionUID = 896290267380126773L;
 
 	@Override
-	public List<SuggestionsOutput> rankerService(RankerInput rankinput,
+	public List<SuggestionsOutput> rankerService(SuggestionsInput rankinput,
 			List<SuggestionsOutput> input) {
 		ArrayList<SuggestionsOutput> outputSuggestionsList = new ArrayList<SuggestionsOutput>();
 		ArrayList<Integer> sortList = new ArrayList<Integer>();

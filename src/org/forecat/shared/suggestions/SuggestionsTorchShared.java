@@ -24,16 +24,19 @@ public class SuggestionsTorchShared extends SuggestionsBasic {
 		Iterator<Entry<String, List<SourceSegment>>> it = segmentPairs.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<String, List<SourceSegment>> e = it.next();
-			if (UtilsShared.isPrefix(input.getPrefixText(), e.getKey())
+			if (UtilsShared.isPrefix(input.getLastWordPrefix(), e.getKey())
 					&& segmentCounts.get(e.getKey()) > 0) {
 				for (SourceSegment ss : segmentPairs.get(e.getKey())) {
 					if (!ss.isUsed()) {
-						if (input.getPrefixStart() >= (ss.getPosition() - frame)
-								&& input.getPrefixStart() <= (ss.getPosition() + frame)) {
+						if (input.getPosition() >= (ss.getPosition() - frame)
+								&& input.getPosition() <= (ss.getPosition() + frame)) {
 							// Simple estimation of feasibility: ratio of lengths
-							preoutput.add(new SuggestionsOutput(e.getKey(), e.getKey().length(), ss
-									.getId() + "." + SubIdProvider.getSubId(e.getKey(), ss), ss
-									.getPosition(), e.getKey().split(" ").length));
+
+							preoutput.add(new SuggestionsOutput(e.getKey(),
+									ss.getSourceSegmentText(), e.getKey().length(),
+									ss.getId() + "." + SubIdProvider.getSubId(e.getKey(), ss),
+									ss.getPosition(), ss.getCharPosition()));
+
 						}
 					}
 				}

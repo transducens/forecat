@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.forecat.client.exceptions.ForecatException;
+import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
@@ -19,7 +20,7 @@ public abstract class RankerShared implements IsSerializable, Serializable {
 		maxSuggestions = value;
 	}
 
-	public abstract List<SuggestionsOutput> rankerService(RankerInput rankinp,
+	public abstract List<SuggestionsOutput> rankerService(SuggestionsInput rankinp,
 			List<SuggestionsOutput> input) throws ForecatException;
 
 }

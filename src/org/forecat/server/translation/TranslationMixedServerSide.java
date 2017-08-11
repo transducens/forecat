@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.forecat.client.exceptions.ForecatException;
-import org.forecat.server.utils.PropertiesServer;
 import org.forecat.shared.SessionShared;
 import org.forecat.shared.languages.LanguagesInput;
 import org.forecat.shared.languages.LanguagesOutput;
@@ -53,14 +52,10 @@ public class TranslationMixedServerSide extends TranslationServerSide {
 
 		session.setAttribute("SuggestionId", sourceSegments.size() + currentId);
 
-		if (PropertiesServer.apertiumLocation == PropertiesServer.ApertiumLocations.NET_APERTIUM) {
-			translateApertiumAPI(sourceSegments, input.getSourceCode(), input.getTargetCode(),
-					segmentPairs, segmentCounts, languagesInput, languagesOutput);
-		} else if (PropertiesServer.apertiumLocation == PropertiesServer.ApertiumLocations.LOCAL_APERTIUM) {
-			translateApertiumLocalInstallation(sourceSegments, input.getSourceCode(),
-					input.getTargetCode(), segmentPairs, segmentCounts, languagesInput,
-					languagesOutput);
-		}
+		translateApertiumAPY(sourceSegments, input.getSourceCode(), input.getTargetCode(),
+				segmentPairs, segmentCounts, languagesInput, languagesOutput);
+		// translateApertiumLocalInstallation(sourceSegments, input.getSourceCode(),
+		// input.getTargetCode(), segmentPairs, segmentCounts, languagesInput, languagesOutput);
 		translateBingAPI(sourceSegments, input.getSourceCode(), input.getTargetCode(),
 				segmentPairs, segmentCounts, languagesInput, languagesOutput);
 

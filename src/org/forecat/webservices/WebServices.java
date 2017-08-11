@@ -315,7 +315,9 @@ public class WebServices extends ForecatServiceImpl {
 	private List<SuggestionsOutput> suggestionsCommon(String targetText, String prefixText,
 			int numwords) {
 		List<SuggestionsOutput> ret = null;
-		SuggestionsInput input = new SuggestionsInput(targetText, prefixText, numwords);
+		// !TODO FIX THIS
+		SuggestionsInput input = new SuggestionsInput(targetText, prefixText, numwords, prefixText,
+				false, numwords, numwords);
 		try {
 			ret = suggestionsRPCServer(input);
 		} catch (ForecatException e) {

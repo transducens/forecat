@@ -49,7 +49,9 @@ public class OptimalCoverage {
 
 			String currentSegment = "" + targetSplit[i].charAt(0);
 
-			SuggestionsInput inputSuggestions = new SuggestionsInput(auxSegment, currentSegment, i);
+			// Last parameters are irrelevant as a complete exploration will take place
+			SuggestionsInput inputSuggestions = new SuggestionsInput(auxSegment, currentSegment, i,
+					"", false, -1, -1);
 
 			ArrayList<SuggestionsOutput> outputSuggestionsList = null;
 			try {
@@ -81,7 +83,8 @@ public class OptimalCoverage {
 					if (currentSegment.length() == 1) {
 						int sugWords = s.getSuggestionText().split(" ").length - 1;
 
-						if (sugWords > 0 || targetSplit[i].length() > Main.suggestionSelectPenalty) {
+						if (sugWords > 0
+								|| targetSplit[i].length() > Main.suggestionSelectPenalty) {
 							coverage[i][sugWords] = currentSegment.length()
 									+ Main.suggestionSelectPenalty;
 
@@ -140,7 +143,8 @@ public class OptimalCoverage {
 
 			} else {
 				prevPair = previous[pair[0]][pair[1]];
-				if (pair[0].compareTo(prevPair[0]) == 0 && pair[1].compareTo(prevPair[1] + 1) == 0) {
+				if (pair[0].compareTo(prevPair[0]) == 0
+						&& pair[1].compareTo(prevPair[1] + 1) == 0) {
 					// Viene de la posición anterior, escrito a mano
 					if (offered[pair[0] + pair[1]] > 0)
 						shortestOffered += offered[pair[0] + pair[1]];

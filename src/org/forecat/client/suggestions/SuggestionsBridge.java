@@ -44,11 +44,10 @@ public class SuggestionsBridge {
 						.createJavaScriptArray();
 				for (int i = 0, n = result.size(); i < n; ++i) {
 					SuggestionsOutput output = result.get(i);
-					outputJsArray.set(
-							i,
+					outputJsArray.set(i,
 							SuggestionsOutputJso.create(output.getSuggestionText(),
 									output.getSuggestionFeasibility(), output.getId(),
-									output.getPosition()));
+									output.getWordPosition()));
 				}
 				JavaScriptJavaUtils.call2_js(successCallback, outputJsArray, context);
 			}

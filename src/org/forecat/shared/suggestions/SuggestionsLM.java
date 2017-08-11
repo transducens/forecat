@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.forecat.client.exceptions.ForecatException;
-import org.forecat.shared.ranker.RankerInput;
 import org.forecat.shared.ranker.RankerScore;
 import org.forecat.shared.ranker.RankerShared;
 import org.forecat.shared.suggestions.LM.IRSTLMscorer;
@@ -32,10 +31,9 @@ public class SuggestionsLM extends SuggestionsShared implements IsSerializable, 
 	@Override
 	public List<SuggestionsOutput> obtainSuggestions(SuggestionsInput input,
 			Map<String, List<SourceSegment>> segmentPairs, Map<String, Integer> segmentCounts) {
-		RankerInput rankerInput = new RankerInput(input.getPosition());
 		List<SuggestionsOutput> output = base.obtainSuggestions(input, segmentPairs, segmentCounts);
 
-		String clippedTargetText = input.getTargetText();
+		String clippedTargetText = input.getFixedPrefix();
 		int j = clippedTargetText.length() - 1;
 		int numberSpaces = 0;
 
@@ -53,14 +51,14 @@ public class SuggestionsLM extends SuggestionsShared implements IsSerializable, 
 		clippedTargetText = clippedTargetText.substring(j, clippedTargetText.length());
 
 		try {
-			output = ranker.rankerService(rankerInput, output);
+			output = ranker.rankerService(input, output);
 		} catch (ForecatException e) {
 			e.printStackTrace();
 		}
 
 		for (SuggestionsOutput so : output) {
-			so.setSuggestionFeasibility(IRSTLMscorer.getPerplexity(clippedTargetText
-					+ so.getSuggestionText()));
+			so.setSuggestionFeasibility(
+					IRSTLMscorer.getPerplexity(clippedTargetText + so.getSuggestionText()));
 			// System.out.println(">>>" + clippedTargetText + "- " + so.getSuggestionText() + " "
 			// + so.getSuggestionFeasibility());
 		}

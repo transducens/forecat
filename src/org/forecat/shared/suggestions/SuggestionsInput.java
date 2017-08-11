@@ -9,16 +9,12 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 @SuppressWarnings("serial")
 public class SuggestionsInput implements Serializable, IsSerializable {
 
-	String targetText;
-	/**
-	 * Word-level start position of the current prefix.
-	 */
-	String prefixText;
-
-	/**
-	 * Number of words we have typed
-	 */
-	int position;
+	private String fixedPrefix;
+	private String lastWordPrefix;
+	private String sourceText;
+	private int position;
+	private boolean fromUsed;
+	private int lastUsedStart, lastUsedEnd;
 
 	/**
 	 * From Serializable documentation
@@ -32,17 +28,75 @@ public class SuggestionsInput implements Serializable, IsSerializable {
 	protected SuggestionsInput() {
 	}
 
-	/**
-	 * Constructor to be used in org.forecat.client.suggestions.SuggestionsBridge.
-	 * 
-	 * @param targetText
-	 * @param prefixStart
-	 * @param prefixText
-	 */
-	public SuggestionsInput(String targetText, String prefixText, int position) {
-		this.targetText = targetText;
-		this.prefixText = prefixText;
+	public SuggestionsInput(String fixedPrefix, String lastWordPrefix, int position,
+			String sourceText, boolean fromUsed, int lastUsedStart, int lastUsedEnd) {
+		this.fixedPrefix = fixedPrefix;
+		this.lastWordPrefix = lastWordPrefix;
 		this.position = position;
+		this.sourceText = sourceText;
+		this.fromUsed = fromUsed;
+		this.lastUsedStart = lastUsedStart;
+		this.lastUsedEnd = lastUsedEnd;
+	}
+
+	public String getFixedPrefix() {
+		return fixedPrefix;
+	}
+
+	public void setFixedPrefix(String fixedPrefix) {
+		this.fixedPrefix = fixedPrefix;
+	}
+
+	public int getFixedPrefixWordLength() {
+		if (fixedPrefix.equals(""))
+			return 0;
+		return fixedPrefix.split(" ").length;
+	}
+
+	public int getFixedPrefixCharLength() {
+		return fixedPrefix.length();
+	}
+
+	public String getLastWordPrefix() {
+		return lastWordPrefix;
+	}
+
+	public void setPrefixText(String lastWordPrefix) {
+		this.lastWordPrefix = lastWordPrefix;
+	}
+
+	public int getPosition() {
+		return position;
+	}
+
+	public String getSourceText() {
+		return sourceText;
+	}
+
+	public void setSourceText(String sourceText) {
+		this.sourceText = sourceText;
+	}
+
+	public int getSourceWordLength() {
+		if ("".equals(sourceText))
+			return 0;
+		return sourceText.split(" ").length;
+	}
+
+	public int getSourceCharLength() {
+		return sourceText.length();
+	}
+
+	public boolean getFromused() {
+		return fromUsed;
+	}
+
+	public int getLastUsedStart() {
+		return lastUsedStart;
+	}
+
+	public int getLastUsedEnd() {
+		return lastUsedEnd;
 	}
 
 	/**
@@ -51,35 +105,9 @@ public class SuggestionsInput implements Serializable, IsSerializable {
 	 * @param jso
 	 */
 	public SuggestionsInput(SuggestionsInputJso jso) {
-		this.targetText = jso.getTargetText();
-		this.prefixText = jso.getPrefixText();
+		this.fixedPrefix = jso.getTargetText();
+		this.lastWordPrefix = jso.getPrefixText();
 		this.position = jso.getPosition();
-	}
-
-	public String getTargetText() {
-		return targetText;
-	}
-
-	public void setTargetText(String targetText) {
-		this.targetText = targetText;
-	}
-
-	public int getPrefixStart() {
-		if (targetText.equals(""))
-			return 0;
-		return targetText.split(" ").length;
-	}
-
-	public String getPrefixText() {
-		return prefixText;
-	}
-
-	public void setPrefixText(String prefixText) {
-		this.prefixText = prefixText;
-	}
-
-	public int getPosition() {
-		return position;
 	}
 
 }

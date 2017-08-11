@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.forecat.client.exceptions.ForecatException;
+import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 
 /**
@@ -28,8 +29,8 @@ public class RankerComposite extends RankerShared {
 	}
 
 	@Override
-	public List<SuggestionsOutput> rankerService(RankerInput rankInp, List<SuggestionsOutput> input)
-			throws ForecatException {
+	public List<SuggestionsOutput> rankerService(SuggestionsInput rankInp,
+			List<SuggestionsOutput> input) throws ForecatException {
 		ArrayList<SuggestionsOutput> outputSuggestionsList = new ArrayList<SuggestionsOutput>();
 
 		// Only the last ranker should limit the number of suggestions to be shown

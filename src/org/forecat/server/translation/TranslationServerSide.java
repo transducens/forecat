@@ -1,9 +1,7 @@
 package org.forecat.server.translation;
 
 import java.io.BufferedReader;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -16,13 +14,11 @@ import java.util.Map;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.forecat.client.exceptions.ForecatException;
-import org.forecat.console.Main;
 import org.forecat.server.translation.cachetrans.Cachetrans;
 import org.forecat.shared.SessionShared;
 import org.forecat.shared.languages.LanguagesInput;
@@ -49,6 +45,11 @@ public class TranslationServerSide extends TranslationShared
 	private static final long serialVersionUID = 6786263404467413690L;
 	public static int phraseumAlpha = 3;
 	public static boolean localApertiumShowUnknown = true;
+
+	public static String phraseumBin;
+	public static String phraseumData;
+	public static String dictionariumBin;
+	public static String dictionariumData;
 
 	public TranslationOutput translationService(TranslationInput input, SessionShared session)
 			throws ForecatException {
@@ -416,36 +417,29 @@ public class TranslationServerSide extends TranslationShared
 				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
 						Engine.DICTIONARIUM.toString(), sourceCode, targetCode))) {
 
-			InputStream file = null;
-			InputStream dictionarium = Main.class
-					.getResourceAsStream("/dictionarium/dictionarium.sh");
-
-			file = Main.class.getResourceAsStream(
-					"/dictionarium/" + sourceCode + "-" + targetCode + ".dict");
-
-			FileOutputStream destination = null;
-			try {
-				destination = new FileOutputStream("/tmp/dictionarium.sh");
-				IOUtils.copy(dictionarium, destination);
-				destination.close();
-				destination = new FileOutputStream("/tmp/dictionarium.data");
-				IOUtils.copy(file, destination);
-				destination.close();
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				return;
-			}
-
+			/*
+			 * InputStream file = null; InputStream dictionarium = Main.class
+			 * .getResourceAsStream("/dictionarium/dictionarium.sh");
+			 * 
+			 * file = Main.class.getResourceAsStream( "/dictionarium/" + sourceCode + "-" +
+			 * targetCode + ".dict");
+			 * 
+			 * FileOutputStream destination = null; try { destination = new
+			 * FileOutputStream("/tmp/dictionarium.sh"); IOUtils.copy(dictionarium, destination);
+			 * destination.close(); destination = new FileOutputStream("/tmp/dictionarium.data");
+			 * IOUtils.copy(file, destination); destination.close(); } catch (Exception ex) {
+			 * ex.printStackTrace(); return; }
+			 */
 			ProcessBuilder pb = null;
 
-			pb = new ProcessBuilder("bash", "/tmp/dictionarium.sh", "/tmp/dictionarium.data", "1");
+			pb = new ProcessBuilder("bash", dictionariumBin, dictionariumData, "1");
 
 			Process proc = null;
 			try {
 				proc = pb.start();
 			} catch (IOException e) {
 				e.printStackTrace();
-				return;
+				System.exit(-1);
 			}
 			PrintWriter out = new PrintWriter(new OutputStreamWriter(proc.getOutputStream()));
 			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -465,7 +459,8 @@ public class TranslationServerSide extends TranslationShared
 					resultLine = in.readLine();
 					while (resultLine != null && !resultLine.equals("")) {
 						resultLine = resultLine.toLowerCase();
-						// System.err.println(ss.getSourceSegmentText() + " " + resultLine);
+						// System.err.println("#D#" + ss.getSourceSegmentText() + " | " +
+						// resultLine);
 						addSegments(segmentPairs, segmentCounts, resultLine,
 								Engine.DICTIONARIUM.toString(), ss);
 						// System.err.println(resultLine);
@@ -490,63 +485,43 @@ public class TranslationServerSide extends TranslationShared
 		if (((LanguagesInput.searchEngine(languagesInput, Engine.PHRASEUM.toString())) != -1)
 				&& (LanguagesOutput.engineTranslatesLanguagePair(languagesOutput,
 						Engine.PHRASEUM.toString(), sourceCode, targetCode))) {
-			boolean direction = false;
-			try {
-				InputStream f = Main.class.getResourceAsStream(
-						"/phraseum/" + sourceCode + "-" + targetCode + ".dict");
-				if (f != null) {
-					direction = true;
-				} else {
-					f = Main.class.getResourceAsStream(
-							"/phraseum/" + targetCode + "-" + sourceCode + ".dict");
-					if (f != null) {
-						direction = false;
-					} else {
-						return;
-					}
-				}
-			} catch (Exception ex) {
-				System.err.println(ex.toString());
-			}
 
-			InputStream file = null;
-			InputStream phraseum = Main.class.getResourceAsStream("/phraseum/phraseum.sh");
-
-			if (direction) {
-				file = Main.class.getResourceAsStream(
-						"/phraseum/" + sourceCode + "-" + targetCode + ".dict");
-			} else {
-				file = Main.class.getResourceAsStream(
-						"/phraseum/" + targetCode + "-" + sourceCode + ".dict");
-			}
-
-			FileOutputStream destination = null;
-			try {
-				destination = new FileOutputStream("/tmp/phraseum.sh");
-				IOUtils.copy(phraseum, destination);
-				destination.close();
-				destination = new FileOutputStream("/tmp/phraseum.data");
-				IOUtils.copy(file, destination);
-				destination.close();
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				return;
-			}
+			/*
+			 * boolean direction = false; try { InputStream f = Main.class.getResourceAsStream(
+			 * "/phraseum/" + sourceCode + "-" + targetCode + ".dict"); if (f != null) { direction =
+			 * true; } else { f = Main.class.getResourceAsStream( "/phraseum/" + targetCode + "-" +
+			 * sourceCode + ".dict"); if (f != null) { direction = false; } else { return; } } }
+			 * catch (Exception ex) { System.err.println(ex.toString()); }
+			 * 
+			 * InputStream file = null; InputStream phraseum =
+			 * Main.class.getResourceAsStream("/phraseum/phraseum.sh");
+			 * 
+			 * if (direction) { file = Main.class.getResourceAsStream( "/phraseum/" + sourceCode +
+			 * "-" + targetCode + ".dict"); } else { file = Main.class.getResourceAsStream(
+			 * "/phraseum/" + targetCode + "-" + sourceCode + ".dict"); }
+			 * 
+			 * FileOutputStream destination = null; try { destination = new
+			 * FileOutputStream("/tmp/phraseum.sh"); IOUtils.copy(phraseum, destination);
+			 * destination.close(); destination = new FileOutputStream("/tmp/phraseum.data");
+			 * IOUtils.copy(file, destination); destination.close(); } catch (Exception ex) {
+			 * ex.printStackTrace(); return; }
+			 * 
+			 */
 
 			ProcessBuilder pb = null;
 
-			if (direction)
-				pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "2",
-						"" + phraseumAlpha);
-			else
-				pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "1",
-						"" + phraseumAlpha);
+			// if (direction)
+			// pb = new ProcessBuilder("bash", "/tmp/phraseum.sh", "/tmp/phraseum.data", "2",
+			// "" + phraseumAlpha);
+			// else
+			pb = new ProcessBuilder("bash", phraseumBin, phraseumData, "1", "" + phraseumAlpha);
 
 			Process proc = null;
 			try {
 				proc = pb.start();
 			} catch (IOException e) {
-				return;
+				e.printStackTrace();
+				System.exit(-1);
 			}
 			PrintWriter out = new PrintWriter(new OutputStreamWriter(proc.getOutputStream()));
 			BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -575,7 +550,8 @@ public class TranslationServerSide extends TranslationShared
 
 					while (resultLine != null && !resultLine.equals("")) {
 						resultLine = resultLine.trim();
-						System.err.println(ss.getSourceSegmentText() + "|" + resultLine);
+						// System.err.println("#P# " + ss.getSourceSegmentText() + "|" +
+						// resultLine);
 						addSegments(segmentPairs, segmentCounts, resultLine,
 								Engine.PHRASEUM.toString(), ss);
 						resultLine = in.readLine();

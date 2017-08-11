@@ -23,6 +23,7 @@ import org.forecat.shared.selection.SelectionShared;
 import org.forecat.shared.suggestions.SuggestionsInput;
 import org.forecat.shared.suggestions.SuggestionsOutput;
 import org.forecat.shared.suggestions.SuggestionsShared;
+import org.forecat.shared.suggestions.LM.IRSTLMscorer;
 import org.forecat.shared.translation.SourceSegment;
 import org.forecat.shared.translation.TranslationInput;
 import org.forecat.shared.translation.TranslationOutput;
@@ -60,6 +61,13 @@ public class Main {
 	static SuggestionsShared suggestions = null;
 	static SelectionShared selection = null;
 
+	public static FileWriter featuresFileWinning = null;
+	public static FileWriter featuresFileViable = null;
+	public static FileWriter featuresTempFile = null;
+	public static File featuresTempF = null;
+	public static boolean useFannStyle = false;
+	public static SessionBrowserSideConsole session;
+
 	static int margin = 0;
 
 	static String outFile = "";
@@ -86,7 +94,7 @@ public class Main {
 		List<LanguagesInput> inputLanguagesList = new ArrayList<LanguagesInput>();
 		OptionsHelper.manageOptions(args, inputLanguagesList, prop);
 
-		SessionBrowserSideConsole session = new SessionBrowserSideConsole();
+		session = new SessionBrowserSideConsole();
 
 		LanguagesServerSide la = new LanguagesServerSide();
 		List<LanguagesOutput> outputLanguagesList = null;
@@ -147,6 +155,9 @@ public class Main {
 				System.out.println("---------------------------------------");
 				System.out.println("Source: " + source + "\nTarget: " + target + "\n");
 
+				Event.source = source;
+				Event.target = target;
+
 				if (computeOptimalEditCost) {
 					int optimalCost = getOptimalCost(session, source, target, numsentence);
 					System.out.println("#" + numsentence + ":" + optimalCost);
@@ -155,6 +166,8 @@ public class Main {
 				} else {
 					evaluateOneSentence(session, source, target, numsentence);
 				}
+
+				TestOutput.flush();
 			}
 		}
 
@@ -174,6 +187,7 @@ public class Main {
 			ex.printStackTrace();
 		}
 
+		IRSTLMscorer.kill();
 		System.out.println(TrustedSegments.getSize());
 	}
 
@@ -215,6 +229,9 @@ public class Main {
 		int words = -1; // Current word
 		char c;
 		Event event;
+
+		boolean fromUsed = false;
+		int lastUsedStart = -1, lastUsedEnd = -1;
 
 		for (int i = 0; i < targetWords; i++) {
 			targetLengths[i] = targetSplit[i].length();
@@ -309,8 +326,15 @@ public class Main {
 			System.out.println(numsentence + ":" + currentSegment + "| " + currentCharacter + " | "
 					+ keypress);
 
+			long startTime = System.nanoTime();
+
 			SuggestionsInput inputSuggestions = new SuggestionsInput(
-					target.substring(0, currentSegmentStart), currentSegment, words);
+					target.substring(0, currentSegmentStart), currentSegment, words, source,
+					fromUsed, lastUsedStart, lastUsedEnd);
+			event.rankinp = inputSuggestions;
+			if (inputSuggestions == null) {
+				System.out.println("NULL");
+			}
 
 			ArrayList<SuggestionsOutput> outputSuggestionsList = null;
 			try {
@@ -322,6 +346,10 @@ public class Main {
 				System.err.println(e.getMessage());
 				System.exit(1);
 			}
+
+			long endtime = System.nanoTime();
+
+			System.out.println("TIME  " + (endtime - startTime) / 1000000.0);
 
 			String typed = currentSegment;
 
@@ -360,11 +388,12 @@ public class Main {
 							"" + s.getSuggestionFeasibility() + ":" + simpleEdit + ":"
 									+ simpleEditFitted + ":" + simpleEditFittedToSpace + ":"
 									+ simpleEdit / sugLength + ":" + simpleEditFitted / sugLength
-									+ ":" + simpleEditFittedToSpace / sugLength
+									+ ":" + simpleEditFittedToSpace / sugLength,
+							s
 
 					);
 				} else {
-					event.addSuggestion(s.getId(), "" + s.getSuggestionFeasibility());
+					event.addSuggestion(s.getId(), "" + s.getSuggestionFeasibility(), s);
 				}
 
 				charactersRead += s.getSuggestionText().length();
@@ -434,6 +463,7 @@ public class Main {
 			}
 
 			if (sb2.toString().isEmpty() || doNotUseSuggestions) {
+				fromUsed = false;
 				// System.out.println("No suggestions available");
 			} else {
 				// System.out.println("Suggestions: " + sb2.toString());
@@ -446,10 +476,10 @@ public class Main {
 
 					TestOutput.addSuggestionPosition(position);
 
-					event.useSuggestion(match.getId(), match.getSuggestionText());
+					event.useSuggestion(match.getId(), match.getSuggestionText(), match);
 
 					SelectionInput inputSelection = new SelectionInput(match.getSuggestionText(),
-							match.getPosition());
+							match.getWordPosition());
 					try {
 						selection.selectionService(inputSelection, session);
 					} catch (ForecatException e) {
@@ -462,9 +492,9 @@ public class Main {
 					// + outputSelection.getNumberSegments());
 
 					suggestions_used++;
-					System.out.println(" MATCH " + words + " " + " " + match.getPosition() + " "
+					System.out.println(" MATCH " + words + " " + " " + match.getWordPosition() + " "
 							+ match.getSuggestionText());
-					TestOutput.addMatch(words, match.getPosition());
+					TestOutput.addMatch(words, match.getWordPosition());
 
 					if (useEditDistance) {
 						System.out.println("#EEE# " + fittedTarget + " " + match.getSuggestionText()
@@ -481,7 +511,12 @@ public class Main {
 					}
 
 					currentSegmentStart = currentCharacter;
+					fromUsed = true;
+					lastUsedStart = match.getWordPosition();
+					lastUsedEnd = match.getWordPosition() + match.getOriginalWordLength();
 					continue;
+				} else {
+					fromUsed = false;
 				}
 			}
 			++currentCharacter;
@@ -562,6 +597,7 @@ public class Main {
 		int words = 0; // Current word
 		int costs[] = new int[target.length() + 1];
 		String[] used = new String[target.length() + 1];
+		SuggestionsOutput[] usedSug = new SuggestionsOutput[target.length() + 1];
 		int[] usedPosition = new int[target.length() + 1];
 		int charsInCurrentSuffix = 0;
 		int totalCost;
@@ -618,8 +654,11 @@ public class Main {
 
 			String currentSegment = target.substring(currentSegmentStart, i + 1);
 
+			// Last parameters (from used suggestion and the span of the last used suggestion) are
+			// irrelevant here, as we are exploring every suggestion
 			SuggestionsInput inputSuggestions = new SuggestionsInput(
-					target.substring(0, currentSegmentStart), currentSegment, words);
+					target.substring(0, currentSegmentStart), currentSegment, words, source, false,
+					-1, -1);
 
 			ArrayList<SuggestionsOutput> outputSuggestionsList = null;
 			try {
@@ -648,11 +687,12 @@ public class Main {
 						: editDistance + suggestionSelectPenalty + costs[i - charsInCurrentSuffix];
 
 				event.addSuggestion(s.getId(),
-						" " + (editDistance == Integer.MAX_VALUE ? 1 : editDistance));
+						" " + (editDistance == Integer.MAX_VALUE ? 1 : editDistance), s);
 
 				if (costs[i + fittedSufixToType.length() - charsInCurrentSuffix] > totalCost) {
 					costs[i + fittedSufixToType.length() - charsInCurrentSuffix] = totalCost;
 					used[i + fittedSufixToType.length() - charsInCurrentSuffix] = s.getId();
+					usedSug[i + fittedSufixToType.length() - charsInCurrentSuffix] = s;
 					usedPosition[i + fittedSufixToType.length() - charsInCurrentSuffix] = i;
 				}
 
@@ -682,7 +722,7 @@ public class Main {
 			if (used[i].equals("-1")) {
 				i--;
 			} else {
-				events[usedPosition[i]].useSuggestion(used[i], used[i]);
+				events[usedPosition[i]].useSuggestion(used[i], used[i], usedSug[i]);
 				i = usedPosition[i];
 			}
 		}
