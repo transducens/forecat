@@ -557,6 +557,22 @@ public class Event {
 		}
 	}
 
+	public static double getAbsoluteAvg() {
+		return absoluteDiff.getMean();
+	}
+
+	public static double getAbsoluteStd() {
+		return absoluteDiff.getStandardDeviation();
+	}
+
+	public static double getRelativeAvg() {
+		return relativeDiff.getMean();
+	}
+
+	public static double getRelativeStd() {
+		return relativeDiff.getStandardDeviation();
+	}
+
 	// Uses the temporary file to create the actual files
 	public static void wrapUp() {
 		double diffAvg = absoluteDiff.getMean(), diffDev = absoluteDiff.getStandardDeviation(),

@@ -478,6 +478,11 @@ public class TestOutput {
 				out.write("\n");
 			}
 
+			out.write("Absolute avg: " + Event.getAbsoluteAvg() + " dev: " + Event.getAbsoluteStd()
+					+ "\n");
+			out.write("Relative avg: " + Event.getRelativeAvg() + " dev: " + Event.getRelativeStd()
+					+ "\n");
+
 			Event.wrapUp();
 
 		} catch (Exception ex) {
