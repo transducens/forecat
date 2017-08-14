@@ -635,22 +635,31 @@ public class Event {
 				features[72] = "" + ((f17 - ratioAvg) / ratioDev);
 
 				if (Main.featuresFileWinning != null) {
-					first = true;
-					for (int i = 0; i < features.length - 1; i++) {
-						if (first) {
-							Main.featuresFileWinning.write(features[i]);
-							first = false;
-						} else {
-							Main.featuresFileWinning.write("," + features[i]);
-						}
-					}
 					if (Main.useFannStyle) {
+						first = true;
+						for (int i = 0; i < features.length - 1; i++) {
+							if (first) {
+								Main.featuresFileWinning.write(features[i]);
+								first = false;
+							} else {
+								Main.featuresFileWinning.write(" " + features[i]);
+							}
+						}
 						if ("winning".equals(features[79])) {
 							Main.featuresFileWinning.write("\n1\n");
 						} else {
 							Main.featuresFileWinning.write("\n0\n");
 						}
 					} else {
+						first = true;
+						for (int i = 0; i < features.length - 1; i++) {
+							if (first) {
+								Main.featuresFileWinning.write(features[i]);
+								first = false;
+							} else {
+								Main.featuresFileWinning.write("," + features[i]);
+							}
+						}
 						if ("winning".equals(features[79])) {
 							Main.featuresFileWinning.write(",W\n");
 						} else {
@@ -659,22 +668,31 @@ public class Event {
 					}
 				}
 				if (Main.featuresFileViable != null) {
-					first = true;
-					for (int i = 0; i < features.length - 1; i++) {
-						if (first) {
-							Main.featuresFileViable.write(features[i]);
-							first = false;
-						} else {
-							Main.featuresFileViable.write("," + features[i]);
-						}
-					}
 					if (Main.useFannStyle) {
+						first = true;
+						for (int i = 0; i < features.length - 1; i++) {
+							if (first) {
+								Main.featuresFileViable.write(features[i]);
+								first = false;
+							} else {
+								Main.featuresFileViable.write(" " + features[i]);
+							}
+						}
 						if ("winning".equals(features[80]) || "viable".equals(features[80])) {
 							Main.featuresFileViable.write("\n1\n");
 						} else {
 							Main.featuresFileViable.write("\n0\n");
 						}
 					} else {
+						first = true;
+						for (int i = 0; i < features.length - 1; i++) {
+							if (first) {
+								Main.featuresFileViable.write(features[i]);
+								first = false;
+							} else {
+								Main.featuresFileViable.write("," + features[i]);
+							}
+						}
 						if ("winning".equals(features[80]) || "viable".equals(features[80])) {
 							Main.featuresFileViable.write(",V\n");
 						} else {
