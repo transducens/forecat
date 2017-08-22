@@ -286,25 +286,36 @@ public class Event {
 		calcPressure();
 
 		for (SuggestionsOutput so : sugOutputs) {
-			fillFeatures(features, so);
+
+			sugType = "loser";
+			if (usedSuggestion() && so.getId() == usedSuggestion.getId()) {
+				sugType = "winning";
+			} else {
+				String soId = so.getId().split("\\.")[0]; // Potential suggestions are segments,
+															// that have no subid
+				for (String pot : potSug) {
+					if (pot.equals(soId)) {
+						sugType = "viable";
+						break;
+					}
+				}
+			}
+
+			boolean addToAvg = false;
+
+			if (Main.featuresFileWinning != null && "winning".equals(sugType)) {
+				addToAvg = true;
+			}
+			if (Main.featuresFileViable != null
+					&& ("winning".equals(sugType) || "viable".equals(sugType))) {
+				addToAvg = true;
+			}
+
+			fillFeatures(features, so, addToAvg);
 			numEvents++;
 			try {
 				for (int i = 0; i < features.length; i++) {
 					Main.featuresTempFile.write(features[i] + ",");
-				}
-
-				sugType = "loser";
-				if (usedSuggestion() && so.getId() == usedSuggestion.getId()) {
-					sugType = "winning";
-				} else {
-					String soId = so.getId().split("\\.")[0]; // Potential suggestions are segments,
-																// that have no subid
-					for (String pot : potSug) {
-						if (pot.equals(soId)) {
-							sugType = "viable";
-							break;
-						}
-					}
 				}
 
 				Main.featuresTempFile.write(sugType + "\n");
@@ -314,7 +325,7 @@ public class Event {
 		}
 	}
 
-	private void fillFeatures(float[] features, SuggestionsOutput so) {
+	private void fillFeatures(float[] features, SuggestionsOutput so, boolean addToAvg) {
 		features[4] = so.getCharPosition();// Suggestion origin in chars
 		features[5] = so.getWordPosition();// Suggestion origin in words
 		// Suggestion origin ratio in chars
@@ -528,11 +539,15 @@ public class Event {
 		// features[ 71 ] = (f[13] - diffAvg) / diffDev
 		// features[71] = (features[13] - diffAvg) / diffDev;
 		features[71] = features[13];
-		absoluteDiff.addValue(features[13]);
+
 		// features[ 72 ] = (f[17] - ratioAvg) / ratioDev
 		// features[72] = (features[17] - ratioAvg) / ratioDev;
 		features[72] = features[17];
-		relativeDiff.addValue(features[17]);
+
+		if (addToAvg) {
+			absoluteDiff.addValue(features[13]);
+			relativeDiff.addValue(features[17]);
+		}
 
 		// features[ 73 ] = FROM USED
 		features[73] = rankinp.getFromused() ? 1.0f : 0.0f;
@@ -678,7 +693,7 @@ public class Event {
 								Main.featuresFileViable.write(" " + features[i]);
 							}
 						}
-						if ("winning".equals(features[80]) || "viable".equals(features[80])) {
+						if ("winning".equals(features[79]) || "viable".equals(features[79])) {
 							Main.featuresFileViable.write("\n1\n");
 						} else {
 							Main.featuresFileViable.write("\n0\n");
@@ -693,7 +708,7 @@ public class Event {
 								Main.featuresFileViable.write("," + features[i]);
 							}
 						}
-						if ("winning".equals(features[80]) || "viable".equals(features[80])) {
+						if ("winning".equals(features[79]) || "viable".equals(features[79])) {
 							Main.featuresFileViable.write(",V\n");
 						} else {
 							Main.featuresFileViable.write(",N\n");
